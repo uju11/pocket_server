@@ -115,16 +115,6 @@ fun MainClientScreen() {
                         )
                     }
 
-                    NavigationTab.TELEGRAM -> {
-                        TelegramStreamScreen(
-                            onPlayMovie = { title, streamUrl, formatBadge ->
-                                activePlayingTitle = title
-                                activeStreamUrl = streamUrl
-                                activeFormatBadge = formatBadge
-                            },
-                            onToast = { showToast(it) }
-                        )
-                    }
 
                     NavigationTab.SCANNER -> {
                         MediaScannerScreen()

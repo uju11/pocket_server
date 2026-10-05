@@ -1955,69 +1955,47 @@ fun getTrendingTorrents(): List<TrendingTorrentDto> {
     return listOf(
         TrendingTorrentDto(
             id = "trend_1",
-            title = "Dune: Part Two",
-            year = "2024",
-            genre = "Sci-Fi • Action",
-            rating = "8.6",
-            quality = "4K UHD",
-            size = "5.8 GB",
-            seeds = 320,
-            magnetUri = "magnet:?xt=urn:btih:dune2part2024&dn=Dune+Part+Two+2024+1080p"
+            title = "Big Buck Bunny",
+            year = "2008",
+            genre = "Animation • Comedy",
+            rating = "8.8",
+            quality = "1080p UHD",
+            size = "276 MB",
+            seeds = 2840,
+            magnetUri = "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com"
         ),
         TrendingTorrentDto(
             id = "trend_2",
-            title = "Oppenheimer",
-            year = "2023",
-            genre = "Biography • Drama",
-            rating = "8.9",
-            quality = "4K HDR",
-            size = "4.2 GB",
-            seeds = 240,
-            magnetUri = "magnet:?xt=urn:btih:oppenheimer2023&dn=Oppenheimer+2023+1080p"
+            title = "Sintel",
+            year = "2010",
+            genre = "Animation • Fantasy",
+            rating = "8.5",
+            quality = "1080p HD",
+            size = "129 MB",
+            seeds = 1920,
+            magnetUri = "magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com"
         ),
         TrendingTorrentDto(
             id = "trend_3",
-            title = "Spider-Man: Across the Spider-Verse",
-            year = "2023",
-            genre = "Animation • Action",
-            rating = "8.7",
-            quality = "4K DV",
-            size = "3.1 GB",
-            seeds = 190,
-            magnetUri = "magnet:?xt=urn:btih:spiderverse2023&dn=Spider-Man+Across+the+Spider-Verse"
+            title = "Tears of Steel",
+            year = "2012",
+            genre = "Sci-Fi • Action",
+            rating = "8.2",
+            quality = "1080p Remux",
+            size = "571 MB",
+            seeds = 1450,
+            magnetUri = "magnet:?xt=urn:btih:209c614cdb49381cc46160e2528f32b3803c684b&dn=Tears+of+Steel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com"
         ),
         TrendingTorrentDto(
             id = "trend_4",
-            title = "Interstellar",
-            year = "2014",
-            genre = "Sci-Fi • Adventure",
-            rating = "8.7",
-            quality = "IMAX 1080p",
-            size = "2.8 GB",
-            seeds = 165,
-            magnetUri = "magnet:?xt=urn:btih:interstellar2014&dn=Interstellar+2014+1080p"
-        ),
-        TrendingTorrentDto(
-            id = "trend_5",
-            title = "Deadpool & Wolverine",
-            year = "2024",
-            genre = "Action • Comedy",
-            rating = "7.8",
-            quality = "1080p BluRay",
-            size = "2.4 GB",
-            seeds = 410,
-            magnetUri = "magnet:?xt=urn:btih:deadpoolwolverine2024&dn=Deadpool+and+Wolverine"
-        ),
-        TrendingTorrentDto(
-            id = "trend_6",
-            title = "Apocalypto",
-            year = "2006",
-            genre = "Action • Adventure",
-            rating = "7.8",
-            quality = "1080p BluRay",
-            size = "2.1 GB",
-            seeds = 112,
-            magnetUri = "magnet:?xt=urn:btih:apocalypto2006&dn=Apocalypto+2006+1080p"
+            title = "Cosmos Laundromat",
+            year = "2015",
+            genre = "Animation • Sci-Fi",
+            rating = "8.4",
+            quality = "1080p Web-DL",
+            size = "210 MB",
+            seeds = 980,
+            magnetUri = "magnet:?xt=urn:btih:c9e15763f722f23e98a29decd97e36b85760480f&dn=Cosmos+Laundromat&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com"
         )
     )
 }

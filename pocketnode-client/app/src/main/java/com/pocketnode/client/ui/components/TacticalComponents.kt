@@ -204,7 +204,6 @@ fun TacticalBottomNav(
         NavigationItem("WATCH",     "Home",      Icons.Outlined.Home,          Icons.Filled.Home),
         NavigationItem("LIBRARY",   "Library",   Icons.Outlined.VideoLibrary,  Icons.Filled.VideoLibrary),
         NavigationItem("TORRENTS",  "Torrents",  Icons.Outlined.CloudDownload, Icons.Filled.CloudDownload),
-        NavigationItem("TELEGRAM",  "Telegram",  Icons.Outlined.Send,          Icons.Filled.Send),
         NavigationItem("SCANNER",   "Scanner",   Icons.Outlined.ManageSearch,  Icons.Filled.ManageSearch),
         NavigationItem("TRANSFERS", "Transfers", Icons.Outlined.Download,      Icons.Filled.Download),
         NavigationItem("SETTINGS",  "Settings",  Icons.Outlined.Settings,      Icons.Filled.Settings)
