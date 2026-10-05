@@ -1,0 +1,29 @@
+# Gradle & Android Build Caches
+**/.gradle/
+**/build/
+**/.kotlin/
+
+# IDE files
+**/.idea/
+**/*.iml
+.vscode/
+
+# Local SDK configurations
+**/local.properties
+
+# Python caches & virtual environments
+**/__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Windows OS files
+Thumbs.db
+Desktop.ini
+
+# Intermediate binaries
+*.exe
+*.apk
+release-apks/
+

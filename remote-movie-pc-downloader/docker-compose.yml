@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # The Hybrid Downloader Bot Python Service
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: media_downloader_bot
+    restart: unless-stopped
+    depends_on:
+      - qbittorrent
+      - jackett
+    env_file:
+      - .env
+    environment:
+      # Override the download directory for container environment
+      - DOWNLOAD_DIR=/downloads
+      # yt-dlp direct URL downloads go to the Jellyfin media folder
+      - DIRECT_DOWNLOAD_DIR=/jelly
+      # Library Scanner environment paths inside container
+      - MOVIES_DIR=/downloads
+      - ADULT_DIR=/jelly
+      # Use internal docker networking URLs to communicate between services
+      - QBITTORRENT_URL=http://qbittorrent:8080
+      - JACKETT_URL=http://jackett:9117
+    volumes:
+      # Map the source directory to persist Telethon session files and debug logs
+      - .:/app
+      # Map the host download directory to /downloads in the container
+      - U:\movies:/downloads
+      # Map the Jellyfin media folder for yt-dlp direct downloads
+      - D:\jelly\New folder:/jelly
+    # Interactive mode is enabled so we can input Telegram OTP during setup if running via CLI
+    stdin_open: true
+    tty: true
+
+  # qBittorrent client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+      - WEBUI_PORT=8080
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    volumes:
+      - ./config/qbittorrent:/config
+      - U:\movies:/downloads
+
+  # Jackett indexer aggregator
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    depends_on:
+      - flaresolverr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+      - AUTO_UPDATE=true
+    ports:
+      - "9117:9117"
+    volumes:
+      - ./config/jackett:/config
+      - U:\movies:/downloads
+
+  # FlareSolverr to bypass Cloudflare anti-bot challenges
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Asia/Kolkata
+      - CAPTCHA_SOLVER=none
+      - HEADLESS=true
+      - BROWSER_TIMEOUT=60000
+    ports:
+      - "8191:8191"
+
+  # Telegram Local Bot API Server (Unlocks 2000 MB / 2 GB direct file downloads)
+  telegram-bot-api:
+    image: aiogram/telegram-bot-api:latest
+    container_name: telegram_bot_api
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_LOCAL=true
+      - TELEGRAM_STAT=true
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data/telegram-bot-api:/var/lib/telegram-bot-api
+      - U:\movies:/downloads
+
