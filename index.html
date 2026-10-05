@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PocketNode — Autonomous Android Media & Torrent Server</title>
+  <meta name="description" content="Turn any Android phone into a 24/7 personal media and torrent server with embedded Jellyfin, Jackett, DLNA, and Telegram remote control.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-red: #E50914;
+      --red-hover: #DC2626;
+      --red-dark: #991B1B;
+      --red-glow: rgba(229, 9, 20, 0.25);
+      --red-subtle: rgba(229, 9, 20, 0.06);
+      --red-border: rgba(229, 9, 20, 0.18);
+      --bg-white: #FFFFFF;
+      --bg-surface: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-light: #94A3B8;
+      --border-light: #E2E8F0;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 8px 24px rgba(229, 9, 20, 0.08);
+      --shadow-lg: 0 16px 36px rgba(229, 9, 20, 0.12);
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--sans);
+      background-color: var(--bg-white);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Header Glow */
+    .bg-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      max-width: 1200px;
+      height: 480px;
+      background: radial-gradient(circle at 50% 20%, rgba(229, 9, 20, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navbar */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(14px);
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid var(--border-light);
+      padding: 1rem 1.5rem;
+    }
+
+    .nav-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-badge {
+      background: var(--primary-red);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.8rem;
+      align-items: center;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary-red);
+    }
+
+    .btn-nav {
+      background: var(--primary-red);
+      color: white !important;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      box-shadow: 0 4px 12px var(--red-glow);
+      transition: all 0.2s ease !important;
+    }
+
+    .btn-nav:hover {
+      background: var(--red-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 4.5rem 0 3.5rem;
+      text-align: center;
+    }
+
+    .beta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-subtle);
+      border: 1px solid var(--red-border);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary-red);
+      margin-bottom: 1.5rem;
+    }
+
+    .beta-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary-red);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.2px;
+      max-width: 880px;
+      margin: 0 auto 1.2rem;
+      color: var(--text-main);
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary-red) 0%, #B91C1C 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.18rem;
+      color: var(--text-muted);
+      max-width: 720px;
+      margin: 0 auto 2.4rem;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 26px;
+      border-radius: var(--radius-sm);
+      font-size: 0.98rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary-red);
+      color: white;
+      box-shadow: 0 6px 20px var(--red-glow);
+      border: 1px solid var(--primary-red);
+    }
+
+    .btn-primary:hover {
+      background: var(--red-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(229, 9, 20, 0.35);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary-red);
+      color: var(--primary-red);
+      transform: translateY(-2px);
+    }
+
+    /* App Preview Interactive Deck */
+    .preview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      margin: 0 auto 4.5rem;
+      max-width: 960px;
+      position: relative;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+
+    .preview-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preview-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      font-weight: 700;
+      border: 1px solid var(--border-light);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preview-tab.active {
+      background: var(--primary-red);
+      color: white;
+      border-color: var(--primary-red);
+    }
+
+    .preview-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.2rem;
+      text-align: left;
+    }
+
+    .service-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .service-box:hover {
+      border-color: var(--red-border);
+    }
+
+    .service-box-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .service-status {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .service-url {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--primary-red);
+      word-break: break-all;
+    }
+
+    /* Section Titles */
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .section-tag {
+      font-family: var(--mono);
+      color: var(--primary-red);
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: 2.3rem;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--text-main);
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 8px auto 0;
+    }
+
+    /* Architecture Split (Server vs Client) */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 5rem;
+    }
+
+    .app-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .app-card:hover {
+      border-color: var(--red-border);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-red);
+    }
+
+    .app-card-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--red-subtle);
+      color: var(--primary-red);
+      margin-bottom: 1rem;
+    }
+
+    .app-card h3 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+    }
+
+    .app-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      margin-bottom: 0.65rem;
+      font-weight: 500;
+    }
+
+    .check-icon {
+      color: var(--primary-red);
+      font-weight: bold;
+    }
+
+    /* How to Use 3-Step Walkthrough */
+    .steps-section {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 4rem 2rem;
+      margin-bottom: 5rem;
+      border: 1px solid var(--border-light);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.8rem;
+    }
+
+    .step-box {
+      background: white;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.8rem;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .step-number {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: var(--primary-red);
+      color: white;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      margin-bottom: 1.2rem;
+    }
+
+    .step-box h4 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-box p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    /* Download Deck Section */
+    .download-section {
+      margin-bottom: 5rem;
+    }
+
+    .beta-alert-box {
+      background: #FFF5F5;
+      border: 1px solid rgba(229, 9, 20, 0.28);
+      border-left: 4px solid var(--primary-red);
+      border-radius: var(--radius-md);
+      padding: 1.2rem 1.6rem;
+      margin-bottom: 2.2rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.05);
+    }
+
+    .beta-alert-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .beta-alert-text strong {
+      display: block;
+      color: var(--primary-red);
+      font-size: 0.98rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .beta-alert-text p {
+      color: var(--text-main);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .beta-alert-text a {
+      color: var(--primary-red);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .dl-card {
+      border: 2px solid var(--red-border);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      background: white;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .dl-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.2rem;
+    }
+
+    .dl-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 1.5rem;
+      background: var(--bg-surface);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .dl-meta span {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .dl-meta strong {
+      color: var(--text-main);
+    }
+
+    /* Roadmap Section */
+    .roadmap-section {
+      margin-bottom: 5rem;
+    }
+
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .roadmap-item {
+      background: white;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.4rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .roadmap-status {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 0.8rem;
+    }
+
+    .status-in-progress {
+      background: rgba(229, 9, 20, 0.1);
+      color: var(--primary-red);
+    }
+
+    .status-next {
+      background: rgba(100, 116, 139, 0.1);
+      color: var(--text-muted);
+    }
+
+    .roadmap-item h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .roadmap-item p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-surface);
+      padding: 3.5rem 0 2.5rem;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .dev-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dev-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary-red);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 10px;
+    }
+
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      background: white;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .social-btn:hover {
+      border-color: var(--primary-red);
+      color: var(--primary-red);
+      transform: translateY(-1px);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border-light);
+      padding-top: 1.5rem;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      font-family: var(--mono);
+    }
+
+    /* Responsive */
+    @media (max-width: 868px) {
+      .hero h1 { font-size: 2.4rem; }
+      .split-grid, .download-grid, .steps-grid { grid-template-columns: 1fr; }
+      .tv-banner { flex-direction: column; text-align: left; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow"></div>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <span style="color: var(--primary-red); font-size: 1.4rem;">⬡</span>
+        <span>PocketNode</span>
+        <span class="brand-badge">BETA</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#about">Overview</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#downloads" class="btn-nav">Download APK</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="beta-pill">
+        <span class="beta-dot"></span>
+        <span>PUBLIC BETA PHASE // ACTIVELY IN DEVELOPMENT</span>
+      </div>
+      <h1>Your Spare Phone Is Now A <span>24/7 Media Server</span></h1>
+      <p>
+        Zero electricity cost. Silent operation. PocketNode turns any Android device into an autonomous self-hosted node running embedded Jellyfin, Jackett Torznab, BitTorrent engine, and Telegram remote downloads.
+        <br><br>
+        <span style="display: inline-block; font-size: 0.9rem; color: var(--primary-red); font-weight: 600; background: var(--red-subtle); padding: 4px 14px; border-radius: 6px; border: 1px solid var(--red-border);">
+          ⚠️ Active Beta Phase: Both Client & Server apps are currently in open beta testing.
+        </span>
+      </p>
+      <div class="hero-actions">
+        <a href="#downloads" class="btn btn-primary">
+          <span>📥 Download Server & Client APK</span>
+        </a>
+        <a href="#how-it-works" class="btn btn-secondary">
+          <span>⚡ How It Works</span>
+        </a>
+      </div>
+
+      <!-- Interactive Node Status Mockup -->
+      <div class="preview-card" id="about">
+        <div class="preview-header">
+          <div class="terminal-dots">
+            <span class="terminal-dot dot-red"></span>
+            <span class="terminal-dot dot-yellow"></span>
+            <span class="terminal-dot dot-green"></span>
+          </div>
+          <div class="preview-tabs">
+            <button class="preview-tab active" id="tab-endpoints">DAEMON STATUS</button>
+            <button class="preview-tab" id="tab-specs">SYSTEM TELEMETRY</button>
+          </div>
+        </div>
+        <div class="preview-body" id="preview-content">
+          <div class="service-box">
+            <div class="service-box-title">
+              <span>🎬 Jellyfin Media Server</span>
+              <span class="service-status">ACTIVE</span>
+            </div>
+            <div class="service-url">http://pocketnode.local:8096</div>
+          </div>
+          <div class="service-box">
+            <div class="service-box-title">
+              <span>🌐 Web Control Deck</span>
+              <span class="service-status">ACTIVE</span>
+            </div>
+            <div class="service-url">http://pocketnode.local:8080</div>
+          </div>
+          <div class="service-box">
+            <div class="service-box-title">
+              <span>🧲 Jackett Torznab</span>
+              <span class="service-status">ACTIVE</span>
+            </div>
+            <div class="service-url">http://pocketnode.local:9117</div>
+          </div>
+          <div class="service-box">
+            <div class="service-box-title">
+              <span>📺 VLC / DLNA Cast</span>
+              <span class="service-status">ACTIVE</span>
+            </div>
+            <div class="service-url">http://pocketnode.local:8090</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture Section (Server vs Client) -->
+    <section>
+      <div class="section-title-wrap">
+        <span class="section-tag">// TWO DEDICATED APPS</span>
+        <h2 class="section-title">The Complete PocketNode Ecosystem</h2>
+        <p class="section-subtitle">A high-performance dual-app architecture tailored for zero friction.</p>
+      </div>
+
+      <div class="split-grid">
+        <!-- Server Card -->
+        <div class="app-card">
+          <div>
+            <span class="app-card-badge">THE HOST DAEMON</span>
+            <h3>PocketNode Core (Server)</h3>
+            <p>Runs as a persistent foreground Android service on your server phone with lock-screen wake-locks.</p>
+            <ul class="feature-list">
+              <li><span class="check-icon">✓</span> Embedded Jellyfin Media Server with REST API</li>
+              <li><span class="check-icon">✓</span> Native Libtorrent4j C++ engine (DHT + Magnet)</li>
+              <li><span class="check-icon">✓</span> Jackett multi-indexer aggregator on port 9117</li>
+              <li><span class="check-icon">✓</span> Telegram Bot for remote one-click downloads</li>
+              <li><span class="check-icon">✓</span> Zero-config Wi-Fi mDNS broadcast</li>
+            </ul>
+          </div>
+          <a href="#downloads" class="btn btn-primary" style="text-align: center; justify-content: center;">
+            Download Server APK
+          </a>
+        </div>
+
+        <!-- Client Card -->
+        <div class="app-card">
+          <div>
+            <span class="app-card-badge">THE CONTROLLER & PLAYER</span>
+            <h3>PocketNode Client</h3>
+            <p>Install on your daily phone, tablet, or Android TV to discover and stream from your PocketNode daemon.</p>
+            <ul class="feature-list">
+              <li><span class="check-icon">✓</span> Instant mDNS zero-setup discovery on Wi-Fi</li>
+              <li><span class="check-icon">✓</span> Direct media stream with hardware decoding</li>
+              <li><span class="check-icon">✓</span> Remote transfer queue management & stats</li>
+              <li><span class="check-icon">✓</span> Clean modern tactical HUD UI</li>
+              <li><span class="check-icon">✓</span> Background push notifications for completed media</li>
+            </ul>
+          </div>
+          <a href="#downloads" class="btn btn-secondary" style="text-align: center; justify-content: center;">
+            Download Client APK
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- How To Use (3 Steps) -->
+    <section class="steps-section" id="how-it-works">
+      <div class="section-title-wrap">
+        <span class="section-tag">// ZERO ROUTER TINKERING</span>
+        <h2 class="section-title">How To Set Up In 3 Minutes</h2>
+        <p class="section-subtitle">No port-forwarding, no Linux CLI knowledge, no dynamic DNS headaches required.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-box">
+          <div class="step-number">01</div>
+          <h4>Install Server APK</h4>
+          <p>Install <strong>PocketNode Core</strong> on any spare Android phone connected to your Wi-Fi, grant storage permissions, and tap <strong>START DAEMON</strong>.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-number">02</div>
+          <h4>Zero-Config Discovery</h4>
+          <p>Open <strong>PocketNode Client</strong> on your main device. It automatically detects <code>pocketnode.local</code> on the network with no manual IP entry needed.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-number">03</div>
+          <h4>Stream & Download</h4>
+          <p>Send magnet links directly from Telegram, search torrents via Jackett, or play high-bitrate video straight to your Smart TV or phone.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Downloads Hub -->
+    <section class="download-section" id="downloads">
+      <div class="section-title-wrap">
+        <span class="section-tag">// GET THE BETA BUILDS</span>
+        <h2 class="section-title">Download PocketNode APKs</h2>
+        <p class="section-subtitle">Tested on Android 8.0 through Android 15 (ARM64 & ARMv7).</p>
+      </div>
+
+      <!-- Beta Alert Banner -->
+      <div class="beta-alert-box">
+        <div class="beta-alert-icon">🧪</div>
+        <div class="beta-alert-text">
+          <strong>Notice: Both Apps Are Currently In The Beta Phase</strong>
+          <p>
+            PocketNode Core (Server) and PocketNode Client are in active development and testing. While all core services (Jellyfin, Jackett, BitTorrent, Telegram Bot) are fully operational, you may occasionally see visual enhancements, hot-fixes, or experimental features. If you spot any bugs or have feedback, please open an issue on <a href="https://github.com/uju11/pocket_server/issues" target="_blank" rel="noopener noreferrer">GitHub</a> or connect with <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer">Ujjwal on LinkedIn</a>!
+          </p>
+        </div>
+      </div>
+
+      <div class="download-grid">
+        <!-- Download Core Server -->
+        <div class="dl-card">
+          <div>
+            <div class="dl-head">
+              <div>
+                <h3 style="font-size: 1.35rem; font-weight: 800;">PocketNode Core (Server)</h3>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Self-Hosted Media Server APK</span>
+              </div>
+              <span class="beta-pill" style="margin: 0;">BETA</span>
+            </div>
+            <div class="dl-meta">
+              <span><strong>File:</strong> pocketnode-server.apk</span>
+              <span><strong>Size:</strong> ~62.9 MB</span>
+              <span><strong>Architecture:</strong> ARM64-v8a, armeabi-v7a</span>
+              <span><strong>Requires:</strong> Android 8.0+ (Oreo or newer)</span>
+              <span><strong>Package:</strong> com.remotemedia</span>
+            </div>
+          </div>
+          <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-server.apk" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="justify-content: center;">
+            <span>📥 Download Server APK (Latest)</span>
+          </a>
+        </div>
+
+        <!-- Download Client -->
+        <div class="dl-card">
+          <div>
+            <div class="dl-head">
+              <div>
+                <h3 style="font-size: 1.35rem; font-weight: 800;">PocketNode Client</h3>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Android TV & Mobile Player APK</span>
+              </div>
+              <span class="beta-pill" style="margin: 0;">BETA</span>
+            </div>
+            <div class="dl-meta">
+              <span><strong>File:</strong> pocketnode-client.apk</span>
+              <span><strong>Size:</strong> ~21.4 MB</span>
+              <span><strong>Architecture:</strong> Universal (TV, Phone, Tablet)</span>
+              <span><strong>Requires:</strong> Android 8.0+</span>
+              <span><strong>Package:</strong> com.pocketnode.client</span>
+            </div>
+          </div>
+          <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-client.apk" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="justify-content: center; border-color: var(--primary-red); color: var(--primary-red);">
+            <span>📥 Download Client APK (Latest)</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upcoming Roadmap -->
+    <section class="roadmap-section" id="roadmap">
+      <div class="section-title-wrap">
+        <span class="section-tag">// PRODUCT EVOLUTION</span>
+        <h2 class="section-title">Upcoming Features</h2>
+        <p class="section-subtitle">What we're actively coding for upcoming releases.</p>
+      </div>
+
+      <div class="roadmap-grid">
+        <div class="roadmap-item">
+          <span class="roadmap-status status-in-progress">IN DEVELOPMENT</span>
+          <h4>LG webOS TV App</h4>
+          <p>Native client tailored for LG Smart TVs with Magic Remote navigation and direct Jellyfin 4K HDR playback.</p>
+        </div>
+        <div class="roadmap-item">
+          <span class="roadmap-status status-in-progress">IN DEVELOPMENT</span>
+          <h4>Cloudflare Tunnel Mesh</h4>
+          <p>Secure out-of-home streaming without exposing ports or requiring router UPnP changes.</p>
+        </div>
+        <div class="roadmap-item">
+          <span class="roadmap-status status-next">UP NEXT</span>
+          <h4>Hardware AV1 Transcoder</h4>
+          <p>Utilize Android MediaCodec hardware encoder for ultra-efficient mobile transcode pipelines.</p>
+        </div>
+        <div class="roadmap-item">
+          <span class="roadmap-status status-next">PLANNED</span>
+          <h4>Auto Subtitle Fetcher</h4>
+          <p>Synchronized multilingual subtitle downloading via OpenSubtitles REST integration.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="dev-profile">
+          <div class="dev-avatar">U</div>
+          <div>
+            <h4 style="font-weight: 800; font-size: 1rem;">Created by Ujjwal MV</h4>
+            <p style="color: var(--text-muted); font-size: 0.82rem;">Autonomous Systems & Android Developer</p>
+          </div>
+        </div>
+
+        <div class="social-links">
+          <a href="https://github.com/uju11/pocket_server" target="_blank" rel="noopener noreferrer" class="social-btn">
+            <span>🐙 GitHub</span>
+          </a>
+          <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer" class="social-btn">
+            <span>💼 LinkedIn</span>
+          </a>
+          <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer" class="social-btn" style="border-color: #F59E0B; color: #D97706;">
+            <span>☕ Buy Me a Coffee</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>PocketNode // Self-Hosted Home Server Engine • Open Beta 2026</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Tab Switcher on Preview Deck
+    const tabEndpoints = document.getElementById('tab-endpoints');
+    const tabSpecs = document.getElementById('tab-specs');
+    const previewContent = document.getElementById('preview-content');
+
+    const endpointsHTML = `
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>🎬 Jellyfin Media Server</span>
+          <span class="service-status">ACTIVE</span>
+        </div>
+        <div class="service-url">http://pocketnode.local:8096</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>🌐 Web Control Deck</span>
+          <span class="service-status">ACTIVE</span>
+        </div>
+        <div class="service-url">http://pocketnode.local:8080</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>🧲 Jackett Torznab</span>
+          <span class="service-status">ACTIVE</span>
+        </div>
+        <div class="service-url">http://pocketnode.local:9117</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>📺 VLC / DLNA Cast</span>
+          <span class="service-status">ACTIVE</span>
+        </div>
+        <div class="service-url">http://pocketnode.local:8090</div>
+      </div>
+    `;
+
+    const specsHTML = `
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>⚡ CPU & Thermal Sensor</span>
+          <span class="service-status" style="color:#0284C7; background:rgba(2,132,199,0.1);">37°C CELL</span>
+        </div>
+        <div class="service-url">Octa-Core ARM64 • Governor: Schedutil</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>💾 Storage Array</span>
+          <span class="service-status" style="color:#0284C7; background:rgba(2,132,199,0.1);">128 GB UFS</span>
+        </div>
+        <div class="service-url">Mount: /storage/emulated/0/PocketNode</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>📡 Network Binding</span>
+          <span class="service-status">ZERO-CONFIG</span>
+        </div>
+        <div class="service-url">mDNS: pocketnode.local (Wi-Fi 5GHz)</div>
+      </div>
+      <div class="service-box">
+        <div class="service-box-title">
+          <span>🔋 Battery & Power</span>
+          <span class="service-status">CHARGING</span>
+        </div>
+        <div class="service-url">Continuous AC Dock • Lock-free daemon</div>
+      </div>
+    `;
+
+    tabEndpoints.addEventListener('click', () => {
+      tabEndpoints.classList.add('active');
+      tabSpecs.classList.remove('active');
+      previewContent.innerHTML = endpointsHTML;
+    });
+
+    tabSpecs.addEventListener('click', () => {
+      tabSpecs.classList.add('active');
+      tabEndpoints.classList.remove('active');
+      previewContent.innerHTML = specsHTML;
+    });
+  </script>
+</body>
+</html>
