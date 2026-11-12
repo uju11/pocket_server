@@ -76,6 +76,24 @@ status, body, hdrs = get(f"{BASE_WEB}/")
 check("GET / → 200 HTML", status == 200 and b"<html" in body.lower(),
       f"status={status}")
 
+# GET /ping → "pong"
+status, body, hdrs = get(f"{BASE_WEB}/ping")
+check("GET /ping → 200 pong", status == 200 and body.strip() == b"pong",
+      f"status={status} body={body[:20]}")
+
+# GET /capabilities → JSON with api_version + features
+status, body, hdrs = get(f"{BASE_WEB}/capabilities")
+try:
+    obj = json.loads(body)
+    check("GET /capabilities → has api_version",
+          status == 200 and "api_version" in obj,
+          f"keys={list(obj.keys())}")
+    check("GET /capabilities → has features dict",
+          isinstance(obj.get("features"), dict),
+          f"features={obj.get('features')}")
+except Exception:
+    check("GET /capabilities → has api_version", False, f"body={body[:60]}")
+
 # GET /api/files → JSON array
 status, body, hdrs = get(f"{BASE_WEB}/api/files")
 check("GET /api/files → 200 JSON array", status == 200 and body.strip().startswith(b"["),

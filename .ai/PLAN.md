@@ -13,7 +13,10 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M0.1 | Fill ARCH.md module map from the code | modules + entry points listed
 [x] M0.2 | Smoke tests recording current Jellyfin/qBittorrent API behavior | tests pass on current code
 [ ] M0.3 | Split into modules: core, network, storage, media, adapters, sources, engine-torrent, telegram (move only, no behavior change) | app builds, M0.2 passes
-[ ] M0.4 | API versioning + /capabilities endpoint | returns version + feature flags
+  [ ] M0.3a | Create Gradle submodule skeletons: :core, :network, :storage, :media, :adapters, :sources, :engine-torrent, :telegram; update settings.gradle.kts | project syncs
+  [ ] M0.3b | Move core/ classes → :core module; update imports in dependents | compiles
+  [ ] M0.3c | Move services/ → :adapters + :network; move download/ → :engine-torrent + :telegram + :sources; move remaining core subsets | compiles, M0.2 passes
+[x] M0.4 | API versioning + /capabilities endpoint | returns version + feature flags
 
 ## M1 Users and pairing
 [ ] M1.1 users + password hashing + roles (admin/user/guest)

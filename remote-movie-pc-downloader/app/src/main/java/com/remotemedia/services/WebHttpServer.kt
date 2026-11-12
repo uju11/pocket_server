@@ -52,6 +52,7 @@ import java.util.UUID
 
 object WebHttpServer {
 
+    const val API_VERSION = "1.0.0"
     private var serverEngine: ApplicationEngine? = null
     private val gson = Gson()
 
@@ -77,6 +78,31 @@ object WebHttpServer {
                         Logger.i(LogTag.HTTP, "Web UI request for folder: ${targetDir.name}")
                         val html = renderWebDashboard(targetDir, pathParam)
                         call.respondText(html, ContentType.Text.Html)
+                    }
+
+                    // Health check
+                    get("/ping") {
+                        call.respondText("pong", ContentType.Text.Plain)
+                    }
+
+                    // API versioning + feature flags (M0.4)
+                    get("/capabilities") {
+                        val caps = mapOf(
+                            "api_version" to API_VERSION,
+                            "features" to mapOf(
+                                "jellyfin" to true,
+                                "qbittorrent_v2" to true,
+                                "dlna" to true,
+                                "jackett" to true,
+                                "torrent_streaming" to true,
+                                "telegram_download" to true,
+                                "ytdlp" to true,
+                                "mesh_share" to false,
+                                "watch_party" to false,
+                                "auth" to false
+                            )
+                        )
+                        call.respondText(gson.toJson(caps), ContentType.Application.Json)
                     }
 
                     // Direct File Download Endpoint
@@ -139,11 +165,7 @@ object WebHttpServer {
                         if (vFile != null) {
                             val direct = HostMediaManager.getDirectFile(vFile)
                             if (direct != null && direct.exists()) {
-                                call.response.header(
-                                    HttpHeaders.ContentDisposition,
-                                    ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, vFile.name).toString()
-                                )
-                                call.respondFile(direct)
+                                respondDirectFileWithRange(call, direct)
                             } else {
                                 val ctx = StorageManager.getContext()
                                 if (ctx != null) {
@@ -270,15 +292,9 @@ object WebHttpServer {
 
                         // 1. Sandbox / Local Movies Storage
                         try {
-                            val moviesDir = StorageManager.getMoviesDir()
-                            val localFiles = moviesDir.listFiles()?.filter { f ->
-                                f.isFile && f.length() > 0 &&
-                                (f.name.endsWith(".mp4", ignoreCase = true) ||
-                                 f.name.endsWith(".mkv", ignoreCase = true) ||
-                                 f.name.endsWith(".avi", ignoreCase = true) ||
-                                 f.name.endsWith(".webm", ignoreCase = true)) &&
+                            val localFiles = StorageManager.getLocalVideoFiles().filter { f ->
                                 f.name.contains(query, ignoreCase = true)
-                            } ?: emptyList()
+                            }
 
                             for (file in localFiles) {
                                 val clean = file.nameWithoutExtension.replace(".", " ")
@@ -306,6 +322,42 @@ object WebHttpServer {
                             Logger.w(LogTag.HTTP, "Local search error: ${e.message}")
                         }
 
+                        // 1b. Host Phone Shared Media (Folders added to host)
+                        try {
+                            if (HostMediaManager.isSharingEnabled.value) {
+                                val hostFiles = HostMediaManager.virtualFiles.value.filter { hf ->
+                                    hf.name.contains(query, ignoreCase = true)
+                                }
+                                for (hf in hostFiles) {
+                                    val clean = hf.name.substringBeforeLast('.').replace(".", " ")
+                                    val year = Regex("""\b(19\d\d|20\d\d)\b""").find(hf.name)?.value ?: ""
+                                    val quality = when {
+                                        hf.name.contains("2160p", true) || hf.name.contains("4k", true) -> "4K UHD"
+                                        hf.name.contains("1080p", true) -> "1080p"
+                                        hf.name.contains("720p", true) -> "720p"
+                                        else -> "HD"
+                                    }
+                                    val direct = HostMediaManager.getDirectFile(hf)
+                                    val streamUrl = if (direct != null && direct.exists()) "/video/${hf.name}" else "/hostmedia/stream?id=${hf.id}"
+                                    results.add(
+                                        UnifiedMediaSearchResult(
+                                            id = "host_${hf.id}",
+                                            title = clean,
+                                            source = "HOST",
+                                            size = formatSize(hf.sizeBytes),
+                                            quality = quality,
+                                            year = year,
+                                            streamUrl = streamUrl,
+                                            fileId = hf.id,
+                                            isLocal = true
+                                        )
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Logger.w(LogTag.HTTP, "Host search error: ${e.message}")
+                        }
+
                         // 2. Telegram Media Catalog (Saved Messages & Bot Forwarded)
                         try {
                             val tgCatalog = com.remotemedia.download.TelegramMediaCatalog.items.value
@@ -324,7 +376,6 @@ object WebHttpServer {
                                         size = item.sizeFormatted,
                                         quality = item.quality,
                                         year = item.year,
-                                        posterUrl = item.posterUrl,
                                         streamUrl = item.streamUrl,
                                         fileId = item.fileId,
                                         isLocal = existsLocally
@@ -1363,7 +1414,13 @@ object WebHttpServer {
     }
 
     private fun renderWebDashboard(currentDir: File, currentRelPath: String): String {
-        val files = StorageManager.listFiles(currentDir)
+        val subdirs = StorageManager.listSubdirectories(currentDir)
+        val files = StorageManager.listFiles(currentDir).filter {
+            val parent = it.parentFile ?: return@filter false
+            runCatching { parent.canonicalPath == currentDir.canonicalPath }.getOrElse {
+                parent.absolutePath == currentDir.absolutePath
+            }
+        }
         val rows = StringBuilder()
 
         val isRoot = currentDir.canonicalPath == StorageManager.getBaseDir().canonicalPath
@@ -1381,42 +1438,44 @@ object WebHttpServer {
             )
         }
 
+        for (dir in subdirs) {
+            val relPath = getRelativePath(dir)
+            val encodedRelPath = URLEncoder.encode(relPath, StandardCharsets.UTF_8.name())
+            rows.append(
+                """
+                <tr>
+                    <td><a href="/?path=$encodedRelPath" class="folder">📁 ${dir.name}/</a></td>
+                    <td>Folder</td>
+                    <td>-</td>
+                </tr>
+                """.trimIndent()
+            )
+        }
+
         for (file in files) {
             val relPath = getRelativePath(file)
             val encodedRelPath = URLEncoder.encode(relPath, StandardCharsets.UTF_8.name())
 
-            if (file.isDirectory) {
-                rows.append(
-                    """
-                    <tr>
-                        <td><a href="/?path=$encodedRelPath" class="folder">📁 ${file.name}/</a></td>
-                        <td>Folder</td>
-                        <td>-</td>
-                    </tr>
-                    """.trimIndent()
-                )
-            } else {
-                val downloadUrl = "/download?path=$encodedRelPath"
-                val streamUrl = "/stream?path=$encodedRelPath"
-                val isVideo = isVideoFile(file.name)
+            val downloadUrl = "/download?path=$encodedRelPath"
+            val streamUrl = "/stream?path=$encodedRelPath"
+            val isVideo = isVideoFile(file.name)
 
-                val playBtn = if (isVideo) {
-                    """<button onclick="playMedia('$streamUrl', '${file.name}')" class="btn btn-play">▶ Stream</button>"""
-                } else ""
+            val playBtn = if (isVideo) {
+                """<button onclick="playMedia('$streamUrl', '${file.name}')" class="btn btn-play">▶ Stream</button>"""
+            } else ""
 
-                rows.append(
-                    """
-                    <tr>
-                        <td>📄 ${file.name}</td>
-                        <td>${formatSize(file.length())}</td>
-                        <td>
-                            $playBtn
-                            <a href="$downloadUrl" class="btn btn-download" download>⬇ Download</a>
-                        </td>
-                    </tr>
-                    """.trimIndent()
-                )
-            }
+            rows.append(
+                """
+                <tr>
+                    <td>📄 ${file.name}</td>
+                    <td>${formatSize(file.length())}</td>
+                    <td>
+                        $playBtn
+                        <a href="$downloadUrl" class="btn btn-download" download>⬇ Download</a>
+                    </td>
+                </tr>
+                """.trimIndent()
+            )
         }
 
         // Render Zero-Copy Host Mobile Shared Media
@@ -2103,6 +2162,20 @@ private suspend fun respondSandboxVideo(call: io.ktor.server.application.Applica
         }
     }
 
+    // 3. Try HostMediaManager lookup (Folders added to host phone)
+    val hostVirtual = HostMediaManager.getVirtualFileById(targetIdOrName)
+        ?: HostMediaManager.virtualFiles.value.find {
+            it.name.equals(targetIdOrName, ignoreCase = true) ||
+            it.name.substringBeforeLast('.').equals(targetIdOrName.substringBeforeLast('.'), ignoreCase = true)
+        }
+    if (hostVirtual != null) {
+        val direct = HostMediaManager.getDirectFile(hostVirtual)
+        if (direct != null && direct.exists() && direct.isFile) {
+            respondDirectFileWithRange(call, direct)
+            return
+        }
+    }
+
     Logger.w(LogTag.HTTP, "Sandbox video file not found on disk: $targetIdOrName")
     call.respondText("Video file not found on disk: $targetIdOrName", status = HttpStatusCode.NotFound)
 }
@@ -2133,6 +2206,10 @@ suspend fun respondDirectFileWithRange(call: io.ktor.server.application.Applicat
         "inline; filename=\"$safeAsciiName\""
     )
     call.response.header(HttpHeaders.AcceptRanges, "bytes")
+    call.response.header(HttpHeaders.AccessControlAllowOrigin, "*")
+    call.response.header(HttpHeaders.AccessControlAllowHeaders, "*")
+    call.response.header(HttpHeaders.AccessControlAllowMethods, "GET, HEAD, OPTIONS")
+    call.response.header(HttpHeaders.AccessControlExposeHeaders, "Content-Range, Accept-Ranges, Content-Length")
 
     val ext = file.extension.lowercase()
     val mimeType = when (ext) {
@@ -2147,40 +2224,12 @@ suspend fun respondDirectFileWithRange(call: io.ktor.server.application.Applicat
         else -> StorageManager.getMimeFromExtension(ext)
     }
     val contentType = runCatching { ContentType.parse(mimeType) }.getOrDefault(ContentType.Application.OctetStream)
+    call.response.header(HttpHeaders.ContentType, contentType.toString())
 
-    if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
-        val ranges = rangeHeader.removePrefix("bytes=").split("-")
-        val start = ranges[0].toLongOrNull() ?: 0L
-        val end = if (ranges.size > 1 && ranges[1].isNotBlank()) {
-            ranges[1].toLongOrNull()?.coerceAtMost(totalLength - 1) ?: (totalLength - 1)
-        } else {
-            totalLength - 1
-        }
-
-        val clampedStart = start.coerceIn(0L, (totalLength - 1).coerceAtLeast(0L))
-        val clampedEnd = end.coerceIn(clampedStart, (totalLength - 1).coerceAtLeast(0L))
-        val contentLength = clampedEnd - clampedStart + 1
-
-        call.response.header(HttpHeaders.ContentRange, "bytes $clampedStart-$clampedEnd/$totalLength")
-        call.response.header(HttpHeaders.ContentLength, contentLength.toString())
-
-        call.respondOutputStream(contentType, HttpStatusCode.PartialContent) {
-            RandomAccessFile(file, "r").use { raf ->
-                raf.seek(clampedStart)
-                var remaining = contentLength
-                val buffer = ByteArray(64 * 1024)
-                while (remaining > 0) {
-                    val toRead = minOf(remaining, buffer.size.toLong()).toInt()
-                    val bytesRead = raf.read(buffer, 0, toRead)
-                    if (bytesRead <= 0) break
-                    this.write(buffer, 0, bytesRead)
-                    remaining -= bytesRead
-                }
-            }
-        }
-    } else {
-        call.response.header(HttpHeaders.ContentLength, totalLength.toString())
+    try {
         call.respondFile(file)
+    } catch (e: Exception) {
+        Logger.w(LogTag.HTTP, "Client stream ended for ${file.name}: ${e.message}")
     }
 }
 

@@ -2,9 +2,9 @@
 Updated: 2026-11-12
 Phase: Spikes → M0
 IN PROGRESS: none
-Last done: M0.2 (smoke_tests.py written; covers /api/files, qBit v2 API, Jellyfin /Items /System/Info/Public)
-Next: M0.3
-Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
+Last done: M0.4 (GET /ping + GET /capabilities in WebHttpServer; API_VERSION=1.0.0; smoke_tests updated)
+Next: M1.1
+Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test; M0.3 blocked (Gradle multi-module Android refactor needs build verification)
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
 - Client app: pocketnode-client/ (Jetpack Compose, ExoPlayer)
