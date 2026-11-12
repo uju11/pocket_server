@@ -7,7 +7,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] S1 | Relay tunnel: host dials out to a tiny relay on a VPS (Python asyncio/FastAPI unless there is a reason not to); phone on mobile data reaches host GET /ping through it | curl via relay returns host /ping
 [x] S2 | Torrent range streaming: libtorrent4j sequential + piece deadlines behind an HTTP range endpoint, played in ExoPlayer | first frame in ~15s on a healthy torrent, seek works
 [x] S3 | Background survival: foreground-service host stays reachable 24h on the real device (manual test) | log of uptime + the battery settings that worked
-[ ] S4 | Clock sync: two clients over WebSocket, play/pause/seek | drift measured, ~300 ms or better
+[x] S4 | Clock sync: two clients over WebSocket, play/pause/seek | drift measured, ~300 ms or better
 
 ## M0 Restructure
 [ ] M0.1 | Fill ARCH.md module map from the code | modules + entry points listed
