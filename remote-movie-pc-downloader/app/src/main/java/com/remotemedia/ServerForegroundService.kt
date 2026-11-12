@@ -17,6 +17,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.remotemedia.core.FederatedMediaManager
+import com.remotemedia.core.UptimeLogger
 import com.remotemedia.core.HostMediaManager
 import com.remotemedia.core.MeshShareManager
 import com.remotemedia.core.NetworkShareManager
@@ -253,12 +254,15 @@ class ServerForegroundService : Service() {
             updateNotification("Server ACTIVE at http://$effectiveHost:$webPort")
             updateAppLauncherIcon(true)
             Logger.i(LogTag.SYSTEM, "All servers active! Web: http://$effectiveHost:$webPort | Jellyfin: http://$effectiveHost:$jellyfinPort | mDNS: http://pocketnode.local:$jellyfinPort")
+            // S3 spike: start heartbeat log
+            UptimeLogger.start(filesDir)
         }
     }
 
     private fun stopServer() {
         serviceScope.launch {
             Logger.i(LogTag.SYSTEM, "Stopping all servers...")
+            UptimeLogger.stop()
             unregisterMdnsServices()
             JellyfinDiscoveryResponder.stop()
             TelegramLocalServer.stop(); _telegramLocalServerRunning.value = false
