@@ -2,8 +2,8 @@
 Updated: 2026-11-12
 Phase: Spikes → M0
 IN PROGRESS: none
-Last done: S4 (clock-sync spike measured; max drift 1.66ms LAN-sim, PASS)
-Next: M0.1
+Last done: M0.1 (ARCH.md rewritten with verified file tree; NanoHTTPD not Ktor; real file names)
+Next: M0.2
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

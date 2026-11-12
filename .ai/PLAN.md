@@ -10,7 +10,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] S4 | Clock sync: two clients over WebSocket, play/pause/seek | drift measured, ~300 ms or better
 
 ## M0 Restructure
-[ ] M0.1 | Fill ARCH.md module map from the code | modules + entry points listed
+[x] M0.1 | Fill ARCH.md module map from the code | modules + entry points listed
 [ ] M0.2 | Smoke tests recording current Jellyfin/qBittorrent API behavior | tests pass on current code
 [ ] M0.3 | Split into modules: core, network, storage, media, adapters, sources, engine-torrent, telegram (move only, no behavior change) | app builds, M0.2 passes
 [ ] M0.4 | API versioning + /capabilities endpoint | returns version + feature flags
