@@ -4,9 +4,9 @@
 Android device = personal cloud + streaming host (one-click on). Clients: streaming app (Netflix-like), drive app (Mega-like), web PWA. Auto LAN/remote switching, per-user progress, watch party, torrent/Telegram/other sources, per-item public/private, download to client or to host. Streams to Jellyfin/VLC/DLNA/WebDAV clients too.
 
 ## Spikes (throwaway code in /spikes or branch spike/*; time-boxed; record the outcome in DECISIONS.md, then stop)
-[ ] S1 | Relay tunnel: host dials out to a tiny relay on a VPS (Python asyncio/FastAPI unless there is a reason not to); phone on mobile data reaches host GET /ping through it | curl via relay returns host /ping
-[ ] S2 | Torrent range streaming: libtorrent4j sequential + piece deadlines behind an HTTP range endpoint, played in ExoPlayer | first frame in ~15s on a healthy torrent, seek works
-[ ] S3 | Background survival: foreground-service host stays reachable 24h on the real device (manual test) | log of uptime + the battery settings that worked
+[x] S1 | Relay tunnel: host dials out to a tiny relay on a VPS (Python asyncio/FastAPI unless there is a reason not to); phone on mobile data reaches host GET /ping through it | curl via relay returns host /ping
+[x] S2 | Torrent range streaming: libtorrent4j sequential + piece deadlines behind an HTTP range endpoint, played in ExoPlayer | first frame in ~15s on a healthy torrent, seek works
+[x] S3 | Background survival: foreground-service host stays reachable 24h on the real device (manual test) | log of uptime + the battery settings that worked
 [ ] S4 | Clock sync: two clients over WebSocket, play/pause/seek | drift measured, ~300 ms or better
 
 ## M0 Restructure
@@ -29,3 +29,4 @@ M5 Torrent streaming + source plugins (Torznab, Telegram, Internet Archive, TMDB
 M6 Watch party (host-authoritative WebSocket) + web PWA with guest links
 M7 Drive app, hub federation, health dashboard
 M8 Docs, demo video, CI, security notes, tagged release
+
