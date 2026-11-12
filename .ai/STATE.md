@@ -2,8 +2,8 @@
 Updated: 2026-11-12
 Phase: M1
 IN PROGRESS: none
-Last done: M1.2 (TokenManager: 32-byte random tokens, issue on login, revoke on logout; GET/POST /api/tokens)
-Next: M1.3
+Last done: M1.3 (PairingManager: stable server_id, 5-min OTP; GET /pair/offer, POST /pair/redeem)
+Next: M1.4
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test; M0.3 blocked (Gradle multi-module Android refactor needs build verification)
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

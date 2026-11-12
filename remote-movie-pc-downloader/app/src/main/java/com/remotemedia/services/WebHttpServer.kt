@@ -99,7 +99,8 @@ object WebHttpServer {
                                 "ytdlp" to true,
                                 "mesh_share" to false,
                                 "watch_party" to false,
-                                "auth" to false
+                                "auth" to true,
+                                "qr_pairing" to true
                             )
                         )
                         call.respondText(gson.toJson(caps), ContentType.Application.Json)
@@ -837,6 +838,31 @@ object WebHttpServer {
                         val token = params["token"] ?: ""
                         val ok = com.remotemedia.core.TokenManager.revoke(token)
                         call.respondText(if (ok) "revoked" else "not_found", ContentType.Text.Plain)
+                    }
+
+                    // QR Pairing (M1.3)
+                    // GET /pair/offer → JSON {otp, server_id, expires_at}; client turns this into a QR code
+                    get("/pair/offer") {
+                        val offer = com.remotemedia.core.PairingManager.createOffer()
+                        call.respondText(gson.toJson(mapOf(
+                            "otp" to offer.otp,
+                            "server_id" to offer.serverId,
+                            "expires_at" to offer.expiresAt
+                        )), ContentType.Application.Json)
+                    }
+
+                    // POST /pair/redeem?otp=<otp> → JSON {server_id, base_url}; client stores result
+                    post("/pair/redeem") {
+                        val params = call.receiveParameters()
+                        val otp = params["otp"] ?: call.request.queryParameters["otp"] ?: ""
+                        val baseUrl = "http://${call.request.local.serverHost}:${call.request.local.serverPort}"
+                        val payload = com.remotemedia.core.PairingManager.redeem(otp, baseUrl)
+                        if (payload != null) {
+                            call.respondText(gson.toJson(payload), ContentType.Application.Json)
+                        } else {
+                            call.respondText("invalid_or_expired", ContentType.Text.Plain,
+                                HttpStatusCode.Gone)
+                        }
                     }
 
                     // 2. App & Version Info

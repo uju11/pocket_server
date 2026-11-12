@@ -126,6 +126,7 @@ class ServerForegroundService : Service() {
         StorageManager.init(this)
         com.remotemedia.core.UserManager.init(this)   // M1.1
         com.remotemedia.core.TokenManager.init(this)   // M1.2
+        com.remotemedia.core.PairingManager.init(this)  // M1.3
         com.remotemedia.core.PlaybackProgressManager.init(this)
         com.remotemedia.services.JellyfinManager.init(this)
         HostMediaManager.init(this)
