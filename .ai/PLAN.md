@@ -19,7 +19,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M0.4 | API versioning + /capabilities endpoint | returns version + feature flags
 
 ## M1 Users and pairing
-[ ] M1.1 users + password hashing + roles (admin/user/guest)
+[x] M1.1 users + password hashing + roles (admin/user/guest)
 [ ] M1.2 per-device tokens (issue/list/revoke)
 [ ] M1.3 QR pairing (server id, one-time token, endpoints)
 [ ] M1.4 watch_state(user, item, position, duration, played, updated_at) table + API

@@ -792,10 +792,18 @@ object WebHttpServer {
                     // ── qBittorrent Web API v2 Compatibility Layer (qRemote, qbRemote, etc.) ──
                     // ═══════════════════════════════════════════════════════════════════════════
 
-                    // 1. Auth: /api/v2/auth/login and logout
+                    // 1. Auth: /api/v2/auth/login and logout  (M1.1: real credential check)
                     post("/api/v2/auth/login") {
-                        call.response.header("Set-Cookie", "SID=pocketnode_session; HttpOnly; Path=/")
-                        call.respondText("Ok.", ContentType.Text.Plain)
+                        val params = call.receiveParameters()
+                        val username = params["username"] ?: ""
+                        val password = params["password"] ?: ""
+                        val user = com.remotemedia.core.UserManager.authenticate(username, password)
+                        if (user != null) {
+                            call.response.header("Set-Cookie", "SID=pocketnode_session; HttpOnly; Path=/")
+                            call.respondText("Ok.", ContentType.Text.Plain)
+                        } else {
+                            call.respondText("Fails.", ContentType.Text.Plain, HttpStatusCode.Forbidden)
+                        }
                     }
 
                     get("/api/v2/auth/login") {
@@ -804,6 +812,12 @@ object WebHttpServer {
 
                     post("/api/v2/auth/logout") {
                         call.respondText("Ok.", ContentType.Text.Plain)
+                    }
+
+                    // User list (admin only — TODO: enforce role in M1.2)
+                    get("/api/users") {
+                        call.respondText(gson.toJson(com.remotemedia.core.UserManager.listUsers()),
+                            ContentType.Application.Json)
                     }
 
                     // 2. App & Version Info

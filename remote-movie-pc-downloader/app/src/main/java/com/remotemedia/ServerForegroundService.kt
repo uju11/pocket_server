@@ -124,6 +124,7 @@ class ServerForegroundService : Service() {
         instance = this
         createNotificationChannel()
         StorageManager.init(this)
+        com.remotemedia.core.UserManager.init(this)   // M1.1
         com.remotemedia.core.PlaybackProgressManager.init(this)
         com.remotemedia.services.JellyfinManager.init(this)
         HostMediaManager.init(this)
