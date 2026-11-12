@@ -797,9 +797,12 @@ object WebHttpServer {
                         val params = call.receiveParameters()
                         val username = params["username"] ?: ""
                         val password = params["password"] ?: ""
+                        val device = params["device"] ?: call.request.headers["User-Agent"] ?: "unknown"
                         val user = com.remotemedia.core.UserManager.authenticate(username, password)
                         if (user != null) {
-                            call.response.header("Set-Cookie", "SID=pocketnode_session; HttpOnly; Path=/")
+                            val token = com.remotemedia.core.TokenManager.issue(username, device) // M1.2
+                            call.response.header("Set-Cookie", "SID=$token; HttpOnly; Path=/")
+                            call.response.header("X-Auth-Token", token)
                             call.respondText("Ok.", ContentType.Text.Plain)
                         } else {
                             call.respondText("Fails.", ContentType.Text.Plain, HttpStatusCode.Forbidden)
@@ -811,6 +814,9 @@ object WebHttpServer {
                     }
 
                     post("/api/v2/auth/logout") {
+                        val token = call.request.headers["X-Auth-Token"]
+                            ?: call.request.cookies["SID"] ?: ""
+                        com.remotemedia.core.TokenManager.revoke(token)
                         call.respondText("Ok.", ContentType.Text.Plain)
                     }
 
@@ -818,6 +824,19 @@ object WebHttpServer {
                     get("/api/users") {
                         call.respondText(gson.toJson(com.remotemedia.core.UserManager.listUsers()),
                             ContentType.Application.Json)
+                    }
+
+                    // Token management (M1.2)
+                    get("/api/tokens") {
+                        call.respondText(gson.toJson(com.remotemedia.core.TokenManager.listAll()),
+                            ContentType.Application.Json)
+                    }
+
+                    post("/api/tokens/revoke") {
+                        val params = call.receiveParameters()
+                        val token = params["token"] ?: ""
+                        val ok = com.remotemedia.core.TokenManager.revoke(token)
+                        call.respondText(if (ok) "revoked" else "not_found", ContentType.Text.Plain)
                     }
 
                     // 2. App & Version Info
