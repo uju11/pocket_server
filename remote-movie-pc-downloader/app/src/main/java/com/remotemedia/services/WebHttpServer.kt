@@ -870,6 +870,42 @@ object WebHttpServer {
                         call.respondText("v4.6.5", ContentType.Text.Plain)
                     }
 
+                    // Watch state API (M1.4)
+                    // POST /api/watch/state  body JSON: {user,item_id,position_sec,duration_sec,played}
+                    post("/api/watch/state") {
+                        try {
+                            val body = call.receiveText()
+                            val j = com.google.gson.JsonParser.parseString(body).asJsonObject
+                            com.remotemedia.core.WatchStateManager.upsert(
+                                com.remotemedia.core.WatchStateManager.WatchState(
+                                    user = j["user"]?.asString ?: "default",
+                                    itemId = j["item_id"]?.asString ?: "",
+                                    positionSec = j["position_sec"]?.asLong ?: 0L,
+                                    durationSec = j["duration_sec"]?.asLong ?: 0L,
+                                    played = j["played"]?.asBoolean ?: false,
+                                    updatedAt = System.currentTimeMillis()
+                                )
+                            )
+                            call.respondText("{\"ok\":true}", ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText("{\"error\":\"${e.message}\"}", ContentType.Application.Json,
+                                HttpStatusCode.BadRequest)
+                        }
+                    }
+
+                    // GET /api/watch/state?user=X&item_id=Y
+                    get("/api/watch/state") {
+                        val user = call.request.queryParameters["user"] ?: "default"
+                        val itemId = call.request.queryParameters["item_id"]
+                        if (itemId != null) {
+                            val s = com.remotemedia.core.WatchStateManager.get(user, itemId)
+                            call.respondText(gson.toJson(s), ContentType.Application.Json)
+                        } else {
+                            val list = com.remotemedia.core.WatchStateManager.listForUser(user)
+                            call.respondText(gson.toJson(list), ContentType.Application.Json)
+                        }
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
