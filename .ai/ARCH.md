@@ -1,7 +1,7 @@
 # ARCH (module map — verified 2026-11-12 against actual file tree)
 Facts verified:
 - 100% Kotlin; single Android Gradle module; minSdk 26, targetSdk 35
-- HTTP server: NanoHTTPD (WebHttpServer.kt) — NOT Ktor
+- HTTP server: **Ktor CIO** embedded (both WebHttpServer :8080 and JellyfinServer :8096)
 - Jellyfin-compatible REST on :8096 (JellyfinServer.kt + JellyfinWebUiBuilder.kt)
 - DLNA/UPnP: DlnaServer.kt (NanoHTTPD-based SSDP + description XML)
 - Telegram: bot.py (Python, long-poll) + TelegramBotEngine.kt / TdlibDownloadEngine.kt
