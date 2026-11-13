@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M4 → M5
 IN PROGRESS: none
-Last done: M4.4 (GET /api/media/stream/{id} with HTTP Range 206/200 & auth/visibility check)
-Next: M5
+Last done: M5.1 (TorrentEngine seeding off by default, TorrentStatusBridge, stream/seeding status endpoints)
+Next: M5.2
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

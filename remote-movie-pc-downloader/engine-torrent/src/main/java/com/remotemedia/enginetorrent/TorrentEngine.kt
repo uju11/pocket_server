@@ -53,6 +53,29 @@ object TorrentEngine {
     private var isInitialized = false
     private val activeMagnets = mutableListOf<String>()
 
+    // M5.1: Seeding toggle — off by default per AGENTS.md safety rule
+    @Volatile var isSeedingEnabled: Boolean = false
+        private set
+
+    fun setSeedingEnabled(enabled: Boolean) {
+        isSeedingEnabled = enabled
+        try {
+            sessionManager?.let { sm ->
+                val sp = org.libtorrent4j.SettingsPack()
+                sp.activeSeeds(if (enabled) 10 else 0)
+                sp.seedingOutgoingConnections(enabled)
+                sm.applySettings(sp)
+            }
+        } catch (_: Throwable) {}
+        Logger.i(LogTag.TORRENT, "Torrent seeding set to $enabled")
+    }
+
+    fun getSeedingStatus(): Map<String, Any> = mapOf(
+        "seeding_enabled" to isSeedingEnabled,
+        "active_downloads" to activeCount,
+        "completed_downloads" to completedCount
+    )
+
     // Download stats observable by UI
     private val _downloads = MutableStateFlow<List<DownloadItem>>(emptyList())
     val downloads: StateFlow<List<DownloadItem>> = _downloads.asStateFlow()
@@ -75,6 +98,8 @@ object TorrentEngine {
             settings.activeDownloads(25)
             settings.connectionsLimit(350)
             settings.alertQueueSize(5000)
+            settings.activeSeeds(0) // M5.1: Seeding disabled by default per AGENTS.md safety rule
+            settings.seedingOutgoingConnections(false)
 
             manager.addListener(object : AlertListener {
                 override fun types(): IntArray? = null
@@ -105,6 +130,21 @@ object TorrentEngine {
 
             // Start periodic progress monitoring
             startProgressMonitor()
+
+            // Wire TorrentStatusBridge for WebHttpServer
+            com.remotemedia.core.TorrentStatusBridge.getSeedingStatus = { getSeedingStatus() }
+            com.remotemedia.core.TorrentStatusBridge.setSeedingEnabled = { setSeedingEnabled(it) }
+            com.remotemedia.core.TorrentStatusBridge.getStreamStatus = { hash ->
+                val s = TorrentStreamManager.getStreamStatus(hash)
+                mapOf(
+                    "readyToPlay" to s.readyToPlay,
+                    "hasMetadata" to s.hasMetadata,
+                    "title" to s.title,
+                    "progressPct" to s.progressPct,
+                    "downSpeed" to s.downSpeed,
+                    "upSpeed" to s.upSpeed
+                )
+            }
         } catch (e: Throwable) {
             isInitialized = false
             sessionManager = null

@@ -789,6 +789,27 @@ object WebHttpServer {
                         call.respondFile(file)
                     }
 
+                    // ── Torrent Streaming Status & Seeding (M5.1) ─────────────
+                    get("/api/torrent/stream/status") {
+                        val hashOrMagnet = call.request.queryParameters["hash"]
+                            ?: call.request.queryParameters["magnet"] ?: ""
+                        val status = com.remotemedia.core.TorrentStatusBridge.getStreamStatus?.invoke(hashOrMagnet)
+                            ?: mapOf("readyToPlay" to false, "hasMetadata" to false, "title" to "Engine idle")
+                        call.respondText(gson.toJson(status), ContentType.Application.Json)
+                    }
+
+                    get("/api/torrent/seeding") {
+                        val status = com.remotemedia.core.TorrentStatusBridge.getSeedingStatus?.invoke()
+                            ?: mapOf("seeding_enabled" to false)
+                        call.respondText(gson.toJson(status), ContentType.Application.Json)
+                    }
+
+                    post("/api/torrent/seeding") {
+                        val enabled = call.request.queryParameters["enabled"]?.toBooleanStrictOrNull() ?: false
+                        com.remotemedia.core.TorrentStatusBridge.setSeedingEnabled?.invoke(enabled)
+                        call.respondText(gson.toJson(mapOf("ok" to true, "seeding_enabled" to enabled)), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
