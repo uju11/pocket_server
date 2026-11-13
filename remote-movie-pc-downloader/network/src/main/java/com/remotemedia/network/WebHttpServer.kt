@@ -944,6 +944,52 @@ object WebHttpServer {
                         call.respondText(html, ContentType.Text.Html)
                     }
 
+                    // ── Federated Library (M7.2) ──────────────────────────────
+                    get("/api/federation/peers") {
+                        val peers = HubFederationManager.listActivePeers()
+                        call.respondText(gson.toJson(peers), ContentType.Application.Json)
+                    }
+
+                    get("/api/federation/library") {
+                        val localFiles = com.remotemedia.storage.StorageManager.listFiles()
+                            .filter { !it.isDirectory && com.remotemedia.storage.StorageManager.isMediaFile(it) }
+
+                        val localItems = localFiles.map { file ->
+                            val enc = java.net.URLEncoder.encode(file.name, "UTF-8")
+                            mapOf(
+                                "id" to file.name,
+                                "title" to file.name,
+                                "origin" to "local",
+                                "node_name" to "This Device",
+                                "size" to file.length(),
+                                "mime" to com.remotemedia.storage.StorageManager.getMimeFromExtension(file.name),
+                                "stream_url" to "/api/media/stream/$enc",
+                                "thumb_url" to "/api/drive/thumb?path=$enc"
+                            )
+                        }
+
+                        val peers = HubFederationManager.listActivePeers()
+                        val allItems = localItems.toMutableList()
+                        for (p in peers) {
+                            allItems.add(mapOf(
+                                "id" to "${p.serverId}:placeholder",
+                                "title" to "Peer Catalog: ${p.nodeName}",
+                                "origin" to p.serverId,
+                                "node_name" to p.nodeName,
+                                "size" to 0L,
+                                "mime" to "video/mp4",
+                                "stream_url" to "${p.baseUrl}/api/media/stream",
+                                "thumb_url" to "${p.baseUrl}/api/drive/thumb"
+                            ))
+                        }
+
+                        call.respondText(gson.toJson(mapOf(
+                            "items" to allItems,
+                            "total" to allItems.size,
+                            "peers_count" to peers.size
+                        )), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }

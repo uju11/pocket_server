@@ -52,7 +52,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M6.4 | Web PWA watch party player — minimal HTML5/JS player page at /party/{token} | connects to /ws/party and syncs playback
 ## M7 Drive app, hub federation, health dashboard
 [x] M7.1 | Hub federation discovery in :network — HubFederationManager.kt: mDNS/SSDP broadcast + discovery of peer PocketNode hosts | discovers peers on same LAN
-[ ] M7.2 | Federated library API in :network — GET /api/federation/library: aggregated media catalog across discovered peers | returns tagged items by host origin
+[x] M7.2 | Federated library API in :network — GET /api/federation/library: aggregated media catalog across discovered peers | returns tagged items by host origin
 [ ] M7.3 | Health metrics endpoint — GET /api/health/metrics: battery, thermal, storage, memory, uptime | returns JSON status for health dashboard
 [ ] M7.4 | Drive file management API — DELETE /api/drive/file, POST /api/drive/rename, POST /api/drive/mkdir | full file lifecycle on StorageManager
 M8 Docs, demo video, CI, security notes, tagged release
