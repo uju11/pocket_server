@@ -7,3 +7,5 @@
 2026-11-12 S3: Added UptimeLogger (5-min heartbeat to files/uptime_log.txt) hooked into startAllServers/stopServer. PC-side ping_remote.sh curls /ping every 5m. Service already had PARTIAL_WAKE_LOCK + WIFI_MODE_FULL_HIGH_PERF + MulticastLock — no lock changes needed. Outcome column requires 24h manual device test.
 
 2026-11-12 S4: NTP-lite WebSocket clock sync. 5-ping median offset estimation. Simulated LAN drift max=1.66ms, mean=1.16ms (PASS <300ms). Real-device estimate ≤30ms. Protocol (server-authoritative time + per-client offset) is the design to embed in M6 watch-party server.
+
+2026-11-13 M6.2: Added io.ktor:ktor-server-websockets:2.3.12 for /ws/party real-time watch party synchronization as proven in S4 spike.

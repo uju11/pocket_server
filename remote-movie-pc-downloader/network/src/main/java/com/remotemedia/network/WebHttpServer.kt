@@ -36,6 +36,11 @@ import io.ktor.server.routing.method
 import io.ktor.server.routing.routing
 import io.ktor.http.HttpMethod
 import io.ktor.server.response.respondBytes
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import io.ktor.websocket.send
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.URLDecoder
@@ -60,6 +65,7 @@ object WebHttpServer {
                 }
                 install(PartialContent)
                 install(AutoHeadResponse)
+                install(WebSockets)
 
                 routing {
                     // HTML5 Web UI File Browser & Player
@@ -808,6 +814,32 @@ object WebHttpServer {
                         val enabled = call.request.queryParameters["enabled"]?.toBooleanStrictOrNull() ?: false
                         com.remotemedia.core.TorrentStatusBridge.setSeedingEnabled?.invoke(enabled)
                         call.respondText(gson.toJson(mapOf("ok" to true, "seeding_enabled" to enabled)), ContentType.Application.Json)
+                    }
+
+                    // ── Watch Party WebSocket (M6.2) ──────────────────────────
+                    webSocket("/ws/party") {
+                        val partyId = call.request.queryParameters["party_id"] ?: "default"
+                        val listener: suspend (String) -> Unit = { msg ->
+                            try { send(Frame.Text(msg)) } catch (_: Exception) {}
+                        }
+                        WatchPartyHub.addListener(partyId, listener)
+                        try {
+                            // Send initial state upon connection
+                            val party = WatchPartyHub.getOrCreateParty(partyId)
+                            send(Frame.Text(gson.toJson(party.toStateMap())))
+
+                            for (frame in incoming) {
+                                if (frame is Frame.Text) {
+                                    val text = frame.readText()
+                                    val resp = WatchPartyHub.handleMessage(partyId, text)
+                                    if (resp != null) {
+                                        send(Frame.Text(resp))
+                                    }
+                                }
+                            }
+                        } finally {
+                            WatchPartyHub.removeListener(partyId, listener)
+                        }
                     }
 
                     get("/api/v2/app/webapiVersion") {
