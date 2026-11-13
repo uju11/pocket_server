@@ -661,6 +661,49 @@ object WebHttpServer {
                         call.respondText(gson.toJson(resp), ContentType.Application.Json)
                     }
 
+                    // ── Media Library (M4.2) ──────────────────────────────────
+                    get("/api/media/library") {
+                        val authHeader = call.request.headers["Authorization"]?.removePrefix("Bearer ")?.trim()
+                        val tokenParam = call.request.queryParameters["token"]
+                        val tokenStr = if (!authHeader.isNullOrBlank()) authHeader else tokenParam
+                        val token = tokenStr?.let { com.remotemedia.core.TokenManager.validate(it) }
+                        val isGuest = (token == null)
+
+                        val allFiles = com.remotemedia.storage.StorageManager.listFiles()
+                        val mediaFiles = allFiles.filter { !it.isDirectory && com.remotemedia.storage.StorageManager.isMediaFile(it) }
+                        val visibleFiles = if (isGuest) {
+                            mediaFiles.filter { com.remotemedia.core.MediaVisibilityManager.isPublic(it.name) }
+                        } else {
+                            mediaFiles
+                        }
+
+                        val items = visibleFiles.map { file ->
+                            val isPub = com.remotemedia.core.MediaVisibilityManager.isPublic(file.name)
+                            val encodedName = java.net.URLEncoder.encode(file.name, "UTF-8")
+                            mapOf(
+                                "id" to file.name,
+                                "title" to file.name,
+                                "size" to file.length(),
+                                "mime" to com.remotemedia.storage.StorageManager.getMimeFromExtension(file.name),
+                                "is_public" to isPub,
+                                "thumb_url" to "/api/drive/thumb?path=$encodedName",
+                                "stream_url" to "/api/media/stream/$encodedName"
+                            )
+                        }
+                        call.respondText(gson.toJson(mapOf("items" to items, "total" to items.size, "is_guest" to isGuest)),
+                            ContentType.Application.Json)
+                    }
+
+                    post("/api/media/visibility") {
+                        val id = call.request.queryParameters["id"] ?: ""
+                        val isPublic = call.request.queryParameters["public"]?.toBooleanStrictOrNull() ?: false
+                        if (id.isBlank()) {
+                            return@post call.respondText("{\"error\":\"missing_id\"}", ContentType.Application.Json, HttpStatusCode.BadRequest)
+                        }
+                        com.remotemedia.core.MediaVisibilityManager.setVisibility(id, isPublic)
+                        call.respondText(gson.toJson(mapOf("id" to id, "is_public" to isPublic)), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
