@@ -38,7 +38,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 ## M4 Streaming app v1 (library, custom player, progress, downloads, public/private)
 [x] M4.1 | Item visibility store in :core — MediaVisibilityManager.kt: per-item public/private flag (default private); set/get/filter | unit-testable, items default to private
 [x] M4.2 | Host media library API — GET /api/media/library with visibility filter (guest gets public only; user gets all) | returns JSON with id, title, size, mime, is_public
-[ ] M4.3 | Watch progress sync API — POST /api/watch/progress (user, item_id, position_ms, duration_ms) | updates WatchStateManager SQLite
+[x] M4.3 | Watch progress sync API — POST /api/watch/progress (user, item_id, position_ms, duration_ms) | updates WatchStateManager SQLite
 [ ] M4.4 | Media direct stream route — GET /api/media/stream/{id} with HTTP Range support | serves 206 Partial Content or 200 OK for ExoPlayer
 M5 Torrent streaming + source plugins (Torznab, Telegram, Internet Archive, TMDB)
 M6 Watch party (host-authoritative WebSocket) + web PWA with guest links

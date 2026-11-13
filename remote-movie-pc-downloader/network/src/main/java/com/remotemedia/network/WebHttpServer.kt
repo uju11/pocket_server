@@ -461,6 +461,54 @@ object WebHttpServer {
                         }
                     }
 
+                    // ── Watch Progress Sync (M4.3) ───────────────────────────
+                    post("/api/watch/progress") {
+                        try {
+                            val qUser = call.request.queryParameters["user"]
+                            val qItem = call.request.queryParameters["item_id"]
+                            val qPos = call.request.queryParameters["position_ms"]?.toLongOrNull()
+                            val qDur = call.request.queryParameters["duration_ms"]?.toLongOrNull()
+
+                            var user = qUser ?: "default"
+                            var itemId = qItem ?: ""
+                            var posMs = qPos ?: 0L
+                            var durMs = qDur ?: 0L
+
+                            if (qItem.isNullOrBlank()) {
+                                val body = call.receiveText()
+                                if (body.isNotBlank()) {
+                                    val j = com.google.gson.JsonParser.parseString(body).asJsonObject
+                                    if (j.has("user")) user = j["user"].asString
+                                    if (j.has("item_id")) itemId = j["item_id"].asString
+                                    if (j.has("position_ms")) posMs = j["position_ms"].asLong
+                                    else if (j.has("position_sec")) posMs = j["position_sec"].asLong * 1000L
+                                    if (j.has("duration_ms")) durMs = j["duration_ms"].asLong
+                                    else if (j.has("duration_sec")) durMs = j["duration_sec"].asLong * 1000L
+                                }
+                            }
+
+                            val posSec = posMs / 1000L
+                            val durSec = durMs / 1000L
+                            val played = durSec > 0 && posSec >= (durSec * 9L / 10L)
+
+                            com.remotemedia.storage.WatchStateManager.upsert(
+                                com.remotemedia.storage.WatchStateManager.WatchState(
+                                    user = user,
+                                    itemId = itemId,
+                                    positionSec = posSec,
+                                    durationSec = durSec,
+                                    played = played,
+                                    updatedAt = System.currentTimeMillis()
+                                )
+                            )
+                            call.respondText(gson.toJson(mapOf("ok" to true, "played" to played, "position_sec" to posSec)),
+                                ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText("{\"error\":\"${e.message}\"}", ContentType.Application.Json,
+                                HttpStatusCode.BadRequest)
+                        }
+                    }
+
                     // ── Drive Upload API (M2.1) ───────────────────────────────
                     // 1. Init session
                     post("/api/drive/upload/init") {
