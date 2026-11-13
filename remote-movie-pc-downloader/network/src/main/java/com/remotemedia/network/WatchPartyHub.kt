@@ -92,7 +92,7 @@ object WatchPartyHub {
 
     /**
      * Process an incoming WebSocket JSON message for [partyId].
-     * Returns a direct response string if needed, and broadcasts state changes to other peers.
+     * Broadcasts state changes to all peers. Returns a direct response only for ping/state queries.
      */
     suspend fun handleMessage(partyId: String, raw: String): String? {
         val json = try {
@@ -114,25 +114,22 @@ object WatchPartyHub {
                 party.positionSec = party.currentPosition()
                 party.playing = true
                 party.serverTimeMs = now
-                val stateMsg = gson.toJson(party.toStateMap())
-                broadcast(partyId, stateMsg)
-                stateMsg
+                broadcast(partyId, gson.toJson(party.toStateMap()))
+                null // broadcast covers all listeners including sender
             }
             "pause" -> {
                 party.positionSec = party.currentPosition()
                 party.playing = false
                 party.serverTimeMs = now
-                val stateMsg = gson.toJson(party.toStateMap())
-                broadcast(partyId, stateMsg)
-                stateMsg
+                broadcast(partyId, gson.toJson(party.toStateMap()))
+                null // broadcast covers all listeners including sender
             }
             "seek" -> {
                 val targetPos = json["position"]?.asDouble ?: 0.0
                 party.positionSec = targetPos
                 party.serverTimeMs = now
-                val stateMsg = gson.toJson(party.toStateMap())
-                broadcast(partyId, stateMsg)
-                stateMsg
+                broadcast(partyId, gson.toJson(party.toStateMap()))
+                null // broadcast covers all listeners including sender
             }
             "state", "sync", "join" -> {
                 gson.toJson(party.toStateMap())

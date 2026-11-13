@@ -99,7 +99,8 @@ object TorrentEngine {
             settings.connectionsLimit(350)
             settings.alertQueueSize(5000)
             settings.activeSeeds(0) // M5.1: Seeding disabled by default per AGENTS.md safety rule
-            settings.seedingOutgoingConnections(false)
+            @Suppress("SwallowedException")
+            try { settings.seedingOutgoingConnections(false) } catch (_: Throwable) {}
 
             manager.addListener(object : AlertListener {
                 override fun types(): IntArray? = null

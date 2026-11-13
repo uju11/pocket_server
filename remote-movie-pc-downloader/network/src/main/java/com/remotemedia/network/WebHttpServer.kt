@@ -658,11 +658,11 @@ object WebHttpServer {
                         // PROPFIND → XML directory/file listing
                         method(HttpMethod("PROPFIND")) {
                             handle {
-                                val rawPath = call.request.uri.removePrefix("/webdav")
+                                val rawPath = call.request.uri.substringBefore("?").removePrefix("/webdav")
                                     .trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
                                 val base = com.remotemedia.storage.StorageManager.getBaseDir()
                                 val target = if (rawPath.isEmpty()) base else java.io.File(base, rawPath)
-                                if (!target.exists()) {
+                                if (!target.exists() || !com.remotemedia.storage.StorageManager.isPathSafe(target)) {
                                     call.respond(HttpStatusCode.NotFound)
                                     return@handle
                                 }
@@ -697,21 +697,23 @@ object WebHttpServer {
 
                         // GET → serve file
                         get {
-                            val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                            val rawPath = call.request.uri.substringBefore("?").removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
                             val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
-                            if (!file.exists() || file.isDirectory) { call.respond(HttpStatusCode.NotFound); return@get }
+                            if (!file.exists() || file.isDirectory || !com.remotemedia.storage.StorageManager.isPathSafe(file)) { call.respond(HttpStatusCode.NotFound); return@get }
                             call.respondFile(file)
                         }
 
                         // PUT → write file
                         method(HttpMethod.Put) {
                             handle {
-                                val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                                val rawPath = call.request.uri.substringBefore("?").removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
                                 val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
-                                file.parentFile?.mkdirs()
-                                call.receive<io.ktor.utils.io.ByteReadChannel>().let { ch ->
-                                    file.outputStream().use { out -> ch.copyTo(out) }
+                                if (!com.remotemedia.storage.StorageManager.isPathSafe(file)) {
+                                    call.respond(HttpStatusCode.Forbidden); return@handle
                                 }
+                                file.parentFile?.mkdirs()
+                                val bytes = call.receive<ByteArray>()
+                                file.outputStream().use { out -> out.write(bytes) }
                                 call.respond(HttpStatusCode.Created)
                             }
                         }
@@ -719,8 +721,9 @@ object WebHttpServer {
                         // DELETE → delete file
                         method(HttpMethod.Delete) {
                             handle {
-                                val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                                val rawPath = call.request.uri.substringBefore("?").removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
                                 val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
+                                if (!com.remotemedia.storage.StorageManager.isPathSafe(file)) { call.respond(HttpStatusCode.Forbidden); return@handle }
                                 if (file.exists() && file.delete()) call.respond(HttpStatusCode.NoContent)
                                 else call.respond(HttpStatusCode.NotFound)
                             }
@@ -734,6 +737,119 @@ object WebHttpServer {
                                 call.respond(HttpStatusCode.OK)
                             }
                         }
+                    }
+
+                    // ── Network Status (M3.4) ─────────────────────────────────
+                    get("/api/network/status") {
+                        val localIp = NetworkManager.getLocalIp()
+                        val relayStatus = RelayClient.status()
+                        val resp = mapOf(
+                            "local_ip" to localIp,
+                            "relay_connected" to (relayStatus["connected"] ?: false),
+                            "relay_url" to relayStatus["relay_url"],
+                            "relay_enabled" to (relayStatus["enabled"] ?: false)
+                        )
+                        call.respondText(gson.toJson(resp), ContentType.Application.Json)
+                    }
+
+                    // ── Media Library (M4.2) ──────────────────────────────────
+                    get("/api/media/library") {
+                        val authHeader = call.request.headers["Authorization"]?.removePrefix("Bearer ")?.trim()
+                        val tokenParam = call.request.queryParameters["token"]
+                        val tokenStr = if (!authHeader.isNullOrBlank()) authHeader else tokenParam
+                        val token = tokenStr?.let { com.remotemedia.core.TokenManager.validate(it) }
+                        val isGuest = (token == null)
+
+                        val allFiles = com.remotemedia.storage.StorageManager.listFiles()
+                        val mediaFiles = allFiles.filter { !it.isDirectory && com.remotemedia.storage.StorageManager.isMediaFile(it) }
+                        val visibleFiles = if (isGuest) {
+                            mediaFiles.filter { com.remotemedia.core.MediaVisibilityManager.isPublic(it.name) }
+                        } else {
+                            mediaFiles
+                        }
+
+                        val items = visibleFiles.map { file ->
+                            val isPub = com.remotemedia.core.MediaVisibilityManager.isPublic(file.name)
+                            val encodedName = java.net.URLEncoder.encode(file.name, "UTF-8")
+                            mapOf(
+                                "id" to file.name,
+                                "title" to file.name,
+                                "size" to file.length(),
+                                "mime" to com.remotemedia.storage.StorageManager.getMimeFromExtension(file.name),
+                                "is_public" to isPub,
+                                "thumb_url" to "/api/drive/thumb?path=$encodedName",
+                                "stream_url" to "/api/media/stream/$encodedName"
+                            )
+                        }
+                        call.respondText(gson.toJson(mapOf("items" to items, "total" to items.size, "is_guest" to isGuest)),
+                            ContentType.Application.Json)
+                    }
+
+                    post("/api/media/visibility") {
+                        val id = call.request.queryParameters["id"] ?: ""
+                        val isPublic = call.request.queryParameters["public"]?.toBooleanStrictOrNull() ?: false
+                        if (id.isBlank()) {
+                            return@post call.respondText("{\"error\":\"missing_id\"}", ContentType.Application.Json, HttpStatusCode.BadRequest)
+                        }
+                        com.remotemedia.core.MediaVisibilityManager.setVisibility(id, isPublic)
+                        call.respondText(gson.toJson(mapOf("id" to id, "is_public" to isPublic)), ContentType.Application.Json)
+                    }
+
+                    // ── Direct Media Stream / Download (M4.4) ────────────────
+                    get("/api/media/stream/{id}") {
+                        val rawId = call.parameters["id"] ?: ""
+                        val id = try { java.net.URLDecoder.decode(rawId, "UTF-8") } catch (_: Exception) { rawId }
+                        if (id.isBlank()) {
+                            return@get call.respond(HttpStatusCode.BadRequest)
+                        }
+
+                        // Auth & visibility check (safety rule: default visibility private)
+                        val isPublic = com.remotemedia.core.MediaVisibilityManager.isPublic(id)
+                        if (!isPublic) {
+                            val authHeader = call.request.headers["Authorization"]?.removePrefix("Bearer ")?.trim()
+                            val tokenParam = call.request.queryParameters["token"]
+                            val tokenStr = if (!authHeader.isNullOrBlank()) authHeader else tokenParam
+                            val token = tokenStr?.let { com.remotemedia.core.TokenManager.validate(it) }
+                            if (token == null) {
+                                return@get call.respond(HttpStatusCode.Unauthorized)
+                            }
+                        }
+
+                        val file = com.remotemedia.storage.StorageManager.resolveRelativePath(id)
+                            ?: java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), id).takeIf { it.exists() }
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+
+                        if (file.isDirectory) {
+                            return@get call.respond(HttpStatusCode.NotFound)
+                        }
+
+                        call.response.header(HttpHeaders.AcceptRanges, "bytes")
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, file.name).toString()
+                        )
+                        call.respondFile(file)
+                    }
+
+                    // ── Torrent Streaming Status & Seeding (M5.1) ─────────────
+                    get("/api/torrent/stream/status") {
+                        val hashOrMagnet = call.request.queryParameters["hash"]
+                            ?: call.request.queryParameters["magnet"] ?: ""
+                        val status = com.remotemedia.core.TorrentStatusBridge.getStreamStatus?.invoke(hashOrMagnet)
+                            ?: mapOf("readyToPlay" to false, "hasMetadata" to false, "title" to "Engine idle")
+                        call.respondText(gson.toJson(status), ContentType.Application.Json)
+                    }
+
+                    get("/api/torrent/seeding") {
+                        val status = com.remotemedia.core.TorrentStatusBridge.getSeedingStatus?.invoke()
+                            ?: mapOf("seeding_enabled" to false)
+                        call.respondText(gson.toJson(status), ContentType.Application.Json)
+                    }
+
+                    post("/api/torrent/seeding") {
+                        val enabled = call.request.queryParameters["enabled"]?.toBooleanStrictOrNull() ?: false
+                        com.remotemedia.core.TorrentStatusBridge.setSeedingEnabled?.invoke(enabled)
+                        call.respondText(gson.toJson(mapOf("ok" to true, "seeding_enabled" to enabled)), ContentType.Application.Json)
                     }
 
                     // ── Network Status (M3.4) ─────────────────────────────────
