@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M5 → M6
+Phase: M6 → M7
 IN PROGRESS: none
-Last done: M6.3 (POST /api/party/invite & GET /api/party/invite guest token generation)
-Next: M6.4
+Last done: M6.4 (HTML5/JS watch party PWA player at /party/{token} connecting to /ws/party)
+Next: M7
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

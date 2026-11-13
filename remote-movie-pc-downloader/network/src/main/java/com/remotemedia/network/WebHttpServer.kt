@@ -872,6 +872,78 @@ object WebHttpServer {
                         )), ContentType.Application.Json)
                     }
 
+                    // ── Web PWA Watch Party Player (M6.4) ─────────────────────
+                    get("/party/{token}") {
+                        val token = call.parameters["token"] ?: ""
+                        val invite = WatchPartyHub.resolveInvite(token)
+                            ?: return@get call.respondText("Party invite not found or expired.", ContentType.Text.Plain, HttpStatusCode.NotFound)
+                        val party = WatchPartyHub.getOrCreateParty(invite.partyId)
+                        val mediaId = party.mediaId
+                        val streamSrc = if (mediaId.isNotBlank()) "/api/media/stream/${java.net.URLEncoder.encode(mediaId, "UTF-8")}" else ""
+
+                        val html = """
+                            <!DOCTYPE html>
+                            <html lang="en">
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>PocketNode Watch Party</title>
+                                <style>
+                                    body { margin: 0; background: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+                                    .container { width: 90%; max-width: 900px; background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+                                    video { width: 100%; border-radius: 8px; background: #000; }
+                                    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+                                    .badge { background: #3b82f6; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+                                    .status { margin-top: 10px; font-size: 13px; color: #94a3b8; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <div class="header">
+                                        <h2>🍿 PocketNode Watch Party</h2>
+                                        <span class="badge" id="syncBadge">Connecting...</span>
+                                    </div>
+                                    <video id="player" controls playsinline src="$streamSrc"></video>
+                                    <div class="status" id="statusText">Party: ${invite.partyId}</div>
+                                </div>
+                                <script>
+                                    const partyId = "${invite.partyId}";
+                                    const player = document.getElementById('player');
+                                    const badge = document.getElementById('syncBadge');
+                                    const status = document.getElementById('statusText');
+                                    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                                    const ws = new WebSocket(wsProto + '//' + location.host + '/ws/party?party_id=' + partyId);
+
+                                    ws.onopen = () => { badge.textContent = 'Synced'; badge.style.background = '#10b981'; };
+                                    ws.onclose = () => { badge.textContent = 'Disconnected'; badge.style.background = '#ef4444'; };
+
+                                    ws.onmessage = (event) => {
+                                        try {
+                                            const data = JSON.parse(event.data);
+                                            if (data.type === 'state') {
+                                                const elapsed = (Date.now() - data.server_time) / 1000.0;
+                                                const target = data.position + (data.playing ? elapsed : 0);
+                                                if (Math.abs(player.currentTime - target) > 0.6) {
+                                                    player.currentTime = target;
+                                                }
+                                                if (data.playing && player.paused) player.play().catch(()=>{});
+                                                if (!data.playing && !player.paused) player.pause();
+                                            }
+                                        } catch (_) {}
+                                    };
+
+                                    setInterval(() => {
+                                        if (ws.readyState === WebSocket.OPEN) {
+                                            ws.send(JSON.stringify({ type: 'ping', t0: Date.now() }));
+                                        }
+                                    }, 5000);
+                                </script>
+                            </body>
+                            </html>
+                        """.trimIndent()
+                        call.respondText(html, ContentType.Text.Html)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }

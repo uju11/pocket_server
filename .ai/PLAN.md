@@ -49,7 +49,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M6.1 | Watch party WebSocket hub in :network — WatchPartyHub.kt: host-authoritative play/pause/seek, clock-sync ping/pong | state broadcast to all connected clients
 [x] M6.2 | /ws/party route in :network — WebHttpServer.kt: Ktor WebSocket endpoint for party room join/sync | bidirectional JSON messages
 [x] M6.3 | Guest party link API — POST /api/party/invite (party_id, ttl_ms) → token + shareable URL | public guest join without user account
-[ ] M6.4 | Web PWA watch party player — minimal HTML5/JS player page at /party/{token} | connects to /ws/party and syncs playback
+[x] M6.4 | Web PWA watch party player — minimal HTML5/JS player page at /party/{token} | connects to /ws/party and syncs playback
 M7 Drive app, hub federation, health dashboard
 M8 Docs, demo video, CI, security notes, tagged release
 
