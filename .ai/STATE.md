@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M3 → M4
 IN PROGRESS: none
-Last done: M3.4 (GET /api/network/status endpoint: local_ip, relay_connected, relay_url, relay_enabled)
-Next: M4
+Last done: M4.1 (MediaVisibilityManager.kt in :core: per-item public/private, default private)
+Next: M4.2
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
