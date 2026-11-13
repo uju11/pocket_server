@@ -551,6 +551,17 @@ object WebHttpServer {
                             ContentType.Application.Json)
                     }
 
+                    // ── Thumbnails (M2.3) ─────────────────────────────────────
+                    get("/api/drive/thumb") {
+                        val path = call.request.queryParameters["path"] ?: ""
+                        val file = com.remotemedia.storage.StorageManager.resolveRelativePath(path)
+                            ?: return@get call.respondText("{\"error\":\"not_found\"}", ContentType.Application.Json, HttpStatusCode.NotFound)
+                        val bytes = com.remotemedia.media.MediaThumbnailManager.getThumbnail(
+                            context = null, mediaId = file.canonicalPath, targetFile = file
+                        )
+                        call.respondBytes(bytes, ContentType.Image.JPEG)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
