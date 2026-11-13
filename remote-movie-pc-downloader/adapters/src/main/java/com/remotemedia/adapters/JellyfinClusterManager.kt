@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.remotemedia.core.LogTag
 import com.remotemedia.core.Logger
 import com.remotemedia.media.FederatedMediaManager
+import com.remotemedia.media.RemoteJellyfinMediaItem
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -85,6 +86,24 @@ object JellyfinClusterManager {
 
     fun init(context: Context) {
         appContext = context.applicationContext
+
+        FederatedMediaManager.remoteJellyfinItemsProvider = {
+            _remoteItems.value.map { r ->
+                RemoteJellyfinMediaItem(
+                    id = r.id,
+                    name = r.name,
+                    category = r.category,
+                    mimeType = r.mimeType,
+                    sizeBytes = r.sizeBytes,
+                    serverName = r.serverName
+                )
+            }
+        }
+        FederatedMediaManager.remoteJellyfinStreamProvider = { sourceId, rangeHeader ->
+            val rItem = _remoteItems.value.find { it.id == sourceId }
+            if (rItem != null) openRemoteStream(rItem, rangeHeader) else null
+        }
+
         val prefs = context.getSharedPreferences("remote_media_prefs", Context.MODE_PRIVATE)
         val json = prefs.getString("jellyfin_cluster_servers_json", null)
 

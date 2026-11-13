@@ -53,9 +53,20 @@ data class FederatedMediaItem(
     val originLabel: String = ""    // e.g., hostname for SMB, folder name for Host, peer name for Mesh
 )
 
+data class RemoteJellyfinMediaItem(
+    val id: String,
+    val name: String,
+    val category: String,
+    val mimeType: String,
+    val sizeBytes: Long,
+    val serverName: String
+)
+
 object FederatedMediaManager {
 
     var telegramStreamProvider: (suspend (fileId: String) -> String?)? = null
+    var remoteJellyfinItemsProvider: (() -> List<RemoteJellyfinMediaItem>)? = null
+    var remoteJellyfinStreamProvider: ((sourceId: String, rangeHeader: String?) -> InputStream?)? = null
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -113,11 +124,6 @@ object FederatedMediaManager {
                     Logger.e(LogTag.STORAGE, "Federated rebuild crashed (will retry on next change): ${e.message}")
                 }
             }.collect { }
-        }
-
-        // Observe remote Jellyfin cluster items
-        scope.launch {
-            JellyfinClusterManager.remoteItems.collect { refresh() }
         }
     }
 
@@ -245,7 +251,7 @@ object FederatedMediaManager {
         }
 
         // ── Source 5: Upstream Jellyfin Server Nodes ──────────────────────────────
-        val remoteJellyItems = JellyfinClusterManager.remoteItems.value
+        val remoteJellyItems = remoteJellyfinItemsProvider?.invoke() ?: emptyList()
         for (f in remoteJellyItems) {
             allItems.add(
                 FederatedMediaItem(
@@ -430,8 +436,7 @@ object FederatedMediaManager {
                 mf?.let { MeshShareManager.openInputStream(it) }
             }
             MediaOrigin.REMOTE_JELLYFIN -> {
-                val rItem = JellyfinClusterManager.remoteItems.value.find { it.id == item.sourceId }
-                rItem?.let { JellyfinClusterManager.openRemoteStream(it, rangeHeader) }
+                remoteJellyfinStreamProvider?.invoke(item.sourceId, rangeHeader)
             }
             MediaOrigin.TELEGRAM -> {
                 try {
