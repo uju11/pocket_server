@@ -648,6 +648,19 @@ object WebHttpServer {
                         }
                     }
 
+                    // ── Network Status (M3.4) ─────────────────────────────────
+                    get("/api/network/status") {
+                        val localIp = NetworkManager.getLocalIp()
+                        val relayStatus = RelayClient.status()
+                        val resp = mapOf(
+                            "local_ip" to localIp,
+                            "relay_connected" to (relayStatus["connected"] ?: false),
+                            "relay_url" to relayStatus["relay_url"],
+                            "relay_enabled" to (relayStatus["enabled"] ?: false)
+                        )
+                        call.respondText(gson.toJson(resp), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }

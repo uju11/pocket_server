@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M1 → M2
+Phase: M3 → M4
 IN PROGRESS: none
-Last done: M3.3 (ConnectionResolver.kt in :core: peer registry, LAN-first reachability check, relay fallback, 30s TTL cache)
-Next: M3.4
+Last done: M3.4 (GET /api/network/status endpoint: local_ip, relay_connected, relay_url, relay_enabled)
+Next: M4
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
