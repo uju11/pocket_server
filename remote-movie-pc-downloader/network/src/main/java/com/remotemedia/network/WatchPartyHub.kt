@@ -42,6 +42,31 @@ object WatchPartyHub {
     private val parties = ConcurrentHashMap<String, PartyState>()
     private val listeners = ConcurrentHashMap<String, CopyOnWriteArraySet<suspend (String) -> Unit>>()
 
+    data class PartyInvite(
+        val token: String,
+        val partyId: String,
+        val expiresAtMs: Long
+    )
+
+    private val invites = ConcurrentHashMap<String, PartyInvite>()
+
+    fun createInvite(partyId: String, ttlMs: Long? = null): PartyInvite {
+        val ttl = ttlMs ?: (24 * 60 * 60 * 1000L) // 24 hours default
+        val token = java.util.UUID.randomUUID().toString().replace("-", "").take(16)
+        val invite = PartyInvite(token = token, partyId = partyId, expiresAtMs = System.currentTimeMillis() + ttl)
+        invites[token] = invite
+        return invite
+    }
+
+    fun resolveInvite(token: String): PartyInvite? {
+        val inv = invites[token] ?: return null
+        if (System.currentTimeMillis() > inv.expiresAtMs) {
+            invites.remove(token)
+            return null
+        }
+        return inv
+    }
+
     fun getOrCreateParty(partyId: String, mediaId: String = ""): PartyState {
         return parties.computeIfAbsent(partyId) {
             PartyState(partyId = partyId, mediaId = mediaId)

@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M5 → M6
 IN PROGRESS: none
-Last done: M6.2 (/ws/party WebSocket endpoint in WebHttpServer for bidirectional party sync)
-Next: M6.3
+Last done: M6.3 (POST /api/party/invite & GET /api/party/invite guest token generation)
+Next: M6.4
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

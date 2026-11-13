@@ -842,6 +842,36 @@ object WebHttpServer {
                         }
                     }
 
+                    // ── Watch Party Guest Invite (M6.3) ───────────────────────
+                    post("/api/party/invite") {
+                        val partyId = call.request.queryParameters["party_id"] ?: "default"
+                        val ttl = call.request.queryParameters["ttl_ms"]?.toLongOrNull()
+                        val mediaId = call.request.queryParameters["media_id"] ?: ""
+                        if (mediaId.isNotBlank()) {
+                            WatchPartyHub.getOrCreateParty(partyId, mediaId).mediaId = mediaId
+                        }
+                        val invite = WatchPartyHub.createInvite(partyId, ttl)
+                        call.respondText(gson.toJson(mapOf(
+                            "token" to invite.token,
+                            "party_id" to invite.partyId,
+                            "url" to "/party/${invite.token}",
+                            "expires_at" to invite.expiresAtMs
+                        )), ContentType.Application.Json)
+                    }
+
+                    get("/api/party/invite") {
+                        val token = call.request.queryParameters["token"] ?: ""
+                        val invite = WatchPartyHub.resolveInvite(token)
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+                        val party = WatchPartyHub.getParty(invite.partyId)
+                        call.respondText(gson.toJson(mapOf(
+                            "token" to invite.token,
+                            "party_id" to invite.partyId,
+                            "media_id" to (party?.mediaId ?: ""),
+                            "expires_at" to invite.expiresAtMs
+                        )), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
