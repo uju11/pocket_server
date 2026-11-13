@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M1 → M2
 IN PROGRESS: none
-Last done: M3.1 (NetworkManager.kt: getLocalIp, isReachable, isSameSubnet — pure functions)
-Next: M3.2
+Last done: M3.2 (RelayClient.kt: stub for relay WS, disabled by default, configure/start/stop/heartbeat)
+Next: M3.3
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

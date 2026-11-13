@@ -32,7 +32,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M2.4 | WebDAV adapter (PROPFIND / GET / PUT / DELETE on /webdav/) | maps to StorageManager; mounts in Windows/macOS Finder
 ## M3 Network manager (LAN auto-switch, relay, later P2P hole punching)
 [x] M3.1 | NetworkManager.kt in :network — detect LAN IP (wlan0/eth0 via NetworkInterface), expose getLocalIp() + isReachable(host,port) | unit-testable pure functions, no Android service deps
-[ ] M3.2 | Relay client stub in :network — RelayClient.kt: dial relay WS (URL from prefs), register as host, forward /ping heartbeat; disabled by default | relay URL configurable; seeding off by default
+[x] M3.2 | Relay client stub in :network — RelayClient.kt: dial relay WS (URL from prefs), register as host, forward /ping heartbeat; disabled by default | relay URL configurable; seeding off by default
 [ ] M3.3 | URL resolver in :core — ConnectionResolver.kt: given peer server_id, return best reachable URL (LAN first, relay fallback); cache TTL 30s | returns LAN URL when on same subnet
 [ ] M3.4 | Expose network info via API — GET /api/network/status (local_ip, relay_connected, relay_url) | returns JSON; relay_connected false when stub disabled
 M4 Streaming app v1 (library, custom player, progress, downloads, public/private)

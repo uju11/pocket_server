@@ -130,6 +130,7 @@ class ServerForegroundService : Service() {
         com.remotemedia.storage.WatchStateManager.init(this) // M1.4
         com.remotemedia.storage.DriveUploadManager.init(this) // M2.1
         com.remotemedia.storage.ShareLinkManager.init(this)   // M2.2
+        com.remotemedia.network.RelayClient.configure(null, com.remotemedia.core.PairingManager.serverId) // M3.2
         com.remotemedia.storage.PlaybackProgressManager.init(this)
         com.remotemedia.adapters.JellyfinManager.init(this)
         HostMediaManager.init(this)
