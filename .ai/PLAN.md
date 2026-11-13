@@ -29,7 +29,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M2.1 | Resumable upload endpoint (POST /api/drive/upload, chunked, resume token) | file lands in StorageManager base dir
 [x] M2.2 | Share links (POST /api/drive/share → token; GET /s/{token} → file download) | public link serves file without auth
 [x] M2.3 | Thumbnails (GET /api/drive/thumb?path=… → JPEG; backed by MediaThumbnailManager) | returns JPEG for image+video files
-[ ] M2.4 | WebDAV adapter (PROPFIND / GET / PUT / DELETE on /webdav/) | maps to StorageManager; mounts in Windows/macOS Finder
+[x] M2.4 | WebDAV adapter (PROPFIND / GET / PUT / DELETE on /webdav/) | maps to StorageManager; mounts in Windows/macOS Finder
 M3 Network manager (LAN auto-switch, relay, later P2P hole punching)
 M4 Streaming app v1 (library, custom player, progress, downloads, public/private)
 M5 Torrent streaming + source plugins (Torznab, Telegram, Internet Archive, TMDB)

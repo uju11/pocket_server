@@ -30,7 +30,10 @@ import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.method
 import io.ktor.server.routing.routing
+import io.ktor.http.HttpMethod
 import io.ktor.server.response.respondBytes
 import java.io.File
 import java.io.RandomAccessFile
@@ -560,6 +563,89 @@ object WebHttpServer {
                             context = null, mediaId = file.canonicalPath, targetFile = file
                         )
                         call.respondBytes(bytes, ContentType.Image.JPEG)
+                    }
+
+                    // ── WebDAV (M2.4) ─────────────────────────────────────────
+                    route("/webdav/{...}") {
+                        // PROPFIND → XML directory/file listing
+                        method(HttpMethod("PROPFIND")) {
+                            handle {
+                                val rawPath = call.request.uri.removePrefix("/webdav")
+                                    .trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                                val base = com.remotemedia.storage.StorageManager.getBaseDir()
+                                val target = if (rawPath.isEmpty()) base else java.io.File(base, rawPath)
+                                if (!target.exists()) {
+                                    call.respond(HttpStatusCode.NotFound)
+                                    return@handle
+                                }
+                                val depth = call.request.headers["Depth"] ?: "0"
+                                val sb = StringBuilder()
+                                sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+                                sb.append("<D:multistatus xmlns:D=\"DAV:\">")
+                                fun appendProp(f: java.io.File, href: String) {
+                                    sb.append("<D:response><D:href>$href</D:href><D:propstat>")
+                                    sb.append("<D:prop>")
+                                    sb.append("<D:displayname>${f.name}</D:displayname>")
+                                    sb.append("<D:getcontentlength>${f.length()}</D:getcontentlength>")
+                                    sb.append("<D:getcontenttype>${com.remotemedia.storage.StorageManager.getMimeFromExtension(f.name)}</D:getcontenttype>")
+                                    if (f.isDirectory) sb.append("<D:resourcetype><D:collection/></D:resourcetype>")
+                                    else sb.append("<D:resourcetype/>")
+                                    sb.append("</D:prop><D:status>HTTP/1.1 200 OK</D:status>")
+                                    sb.append("</D:propstat></D:response>")
+                                }
+                                val baseHref = "/webdav/${rawPath.ifEmpty { "" }}"
+                                appendProp(target, baseHref)
+                                if (depth != "0" && target.isDirectory) {
+                                    target.listFiles()?.forEach { child ->
+                                        val childPath = if (rawPath.isEmpty()) child.name else "$rawPath/${child.name}"
+                                        appendProp(child, "/webdav/$childPath")
+                                    }
+                                }
+                                sb.append("</D:multistatus>")
+                                call.response.header("DAV", "1")
+                                call.respondText(sb.toString(), ContentType.Application.Xml, HttpStatusCode(207, "Multi-Status"))
+                            }
+                        }
+
+                        // GET → serve file
+                        get {
+                            val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                            val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
+                            if (!file.exists() || file.isDirectory) { call.respond(HttpStatusCode.NotFound); return@get }
+                            call.respondFile(file)
+                        }
+
+                        // PUT → write file
+                        method(HttpMethod.Put) {
+                            handle {
+                                val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                                val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
+                                file.parentFile?.mkdirs()
+                                call.receive<io.ktor.utils.io.ByteReadChannel>().let { ch ->
+                                    file.outputStream().use { out -> ch.copyTo(out) }
+                                }
+                                call.respond(HttpStatusCode.Created)
+                            }
+                        }
+
+                        // DELETE → delete file
+                        method(HttpMethod.Delete) {
+                            handle {
+                                val rawPath = call.request.uri.removePrefix("/webdav").trimStart('/').let { java.net.URLDecoder.decode(it, "UTF-8") }
+                                val file = java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), rawPath)
+                                if (file.exists() && file.delete()) call.respond(HttpStatusCode.NoContent)
+                                else call.respond(HttpStatusCode.NotFound)
+                            }
+                        }
+
+                        // OPTIONS → advertise WebDAV methods
+                        method(HttpMethod.Options) {
+                            handle {
+                                call.response.header("Allow", "OPTIONS, GET, PUT, DELETE, PROPFIND")
+                                call.response.header("DAV", "1")
+                                call.respond(HttpStatusCode.OK)
+                            }
+                        }
                     }
 
                     get("/api/v2/app/webapiVersion") {

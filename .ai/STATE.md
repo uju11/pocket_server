@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M1 → M2
 IN PROGRESS: none
-Last done: M2.3 (GET /api/drive/thumb?path=… → JPEG via MediaThumbnailManager)
-Next: M2.4
+Last done: M2.4 (WebDAV: PROPFIND/GET/PUT/DELETE/OPTIONS on /webdav/ → StorageManager)
+Next: M3
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
