@@ -20,6 +20,7 @@ import io.ktor.server.plugins.autohead.AutoHeadResponse
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.partialcontent.PartialContent
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.request.receiveText
@@ -454,6 +455,67 @@ object WebHttpServer {
                         } else {
                             val list = com.remotemedia.storage.WatchStateManager.listForUser(user)
                             call.respondText(gson.toJson(list), ContentType.Application.Json)
+                        }
+                    }
+
+                    // ── Drive Upload API (M2.1) ───────────────────────────────
+                    // 1. Init session
+                    post("/api/drive/upload/init") {
+                        val name = call.request.queryParameters["name"] ?: "upload"
+                        val size = call.request.queryParameters["size"]?.toLongOrNull() ?: 0L
+                        val session = com.remotemedia.storage.DriveUploadManager.initSession(name, size)
+                        call.respondText(gson.toJson(mapOf(
+                            "upload_id" to session.uploadId,
+                            "chunk_size" to com.remotemedia.storage.DriveUploadManager.CHUNK_SIZE
+                        )), ContentType.Application.Json)
+                    }
+
+                    // 2. Write chunk — raw body bytes at given offset
+                    post("/api/drive/upload/chunk") {
+                        val uploadId = call.request.queryParameters["upload_id"] ?: ""
+                        val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0L
+                        val bytes = call.receive<ByteArray>()
+                        try {
+                            val received = com.remotemedia.storage.DriveUploadManager.writeChunk(uploadId, offset, bytes)
+                            call.respondText(gson.toJson(mapOf("received" to received)),
+                                ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText("{\"error\":\"${e.message}\"}", ContentType.Application.Json,
+                                HttpStatusCode.BadRequest)
+                        }
+                    }
+
+                    // 3. Complete — finalise and move to library
+                    post("/api/drive/upload/complete") {
+                        val uploadId = call.request.queryParameters["upload_id"] ?: ""
+                        try {
+                            val path = com.remotemedia.storage.DriveUploadManager.complete(uploadId)
+                            call.respondText(gson.toJson(mapOf("path" to path)), ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText("{\"error\":\"${e.message}\"}", ContentType.Application.Json,
+                                HttpStatusCode.BadRequest)
+                        }
+                    }
+
+                    // 4. Cancel / abort
+                    post("/api/drive/upload/cancel") {
+                        val uploadId = call.request.queryParameters["upload_id"] ?: ""
+                        com.remotemedia.storage.DriveUploadManager.cancel(uploadId)
+                        call.respondText("{\"ok\":true}", ContentType.Application.Json)
+                    }
+
+                    // 5. Status check
+                    get("/api/drive/upload/status") {
+                        val uploadId = call.request.queryParameters["upload_id"] ?: ""
+                        val s = com.remotemedia.storage.DriveUploadManager.getSession(uploadId)
+                        if (s != null) {
+                            call.respondText(gson.toJson(mapOf(
+                                "upload_id" to s.uploadId, "file_name" to s.fileName,
+                                "total_size" to s.totalSize, "bytes_received" to s.bytesReceived
+                            )), ContentType.Application.Json)
+                        } else {
+                            call.respondText("{\"error\":\"not_found\"}", ContentType.Application.Json,
+                                HttpStatusCode.NotFound)
                         }
                     }
 
