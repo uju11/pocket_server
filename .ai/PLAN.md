@@ -55,5 +55,9 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M7.2 | Federated library API in :network — GET /api/federation/library: aggregated media catalog across discovered peers | returns tagged items by host origin
 [x] M7.3 | Health metrics endpoint — GET /api/health/metrics: battery, thermal, storage, memory, uptime | returns JSON status for health dashboard
 [x] M7.4 | Drive file management API — DELETE /api/drive/file, POST /api/drive/rename, POST /api/drive/mkdir | full file lifecycle on StorageManager
-M8 Docs, demo video, CI, security notes, tagged release
+## M8 Docs, demo video, CI, security notes, tagged release
+[x] M8.1 | Security audit & notes — docs/SECURITY.md: document auth model, private by default, tokens, network safety | security guide written
+[ ] M8.2 | Final ARCH.md documentation update — .ai/ARCH.md: update endpoint map and module architecture | reflects all implemented endpoints
+[ ] M8.3 | CI workflow — .github/workflows/ci.yml: GitHub Actions build and test verification | valid workflow YAML
+[ ] M8.4 | Tagged v1.0.0 release notes — RELEASE_NOTES.md: comprehensive changelog and release notes | release notes document written
 

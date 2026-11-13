@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M7 → M8
 IN PROGRESS: none
-Last done: M7.4 (Drive file management: DELETE/rename/mkdir on /api/drive/ backed by StorageManager)
-Next: M8
+Last done: M8.1 (docs/SECURITY.md: security architecture, auth model, private by default, sandboxing)
+Next: M8.2
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
