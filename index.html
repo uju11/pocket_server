@@ -5,1125 +5,998 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PocketNode — Autonomous Android Media & Torrent Server</title>
   <meta name="description" content="Turn any Android phone into a 24/7 personal media and torrent server with embedded Jellyfin, Jackett, DLNA, and Telegram remote control.">
+  <meta name="color-scheme" content="light dark">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* ── Design tokens ─────────────────────────────────────────── */
     :root {
-      --primary-red: #E50914;
-      --red-hover: #DC2626;
-      --red-dark: #991B1B;
-      --red-glow: rgba(229, 9, 20, 0.25);
-      --red-subtle: rgba(229, 9, 20, 0.06);
-      --red-border: rgba(229, 9, 20, 0.18);
-      --bg-white: #FFFFFF;
-      --bg-surface: #F8FAFC;
-      --bg-card: #FFFFFF;
-      --text-main: #0F172A;
-      --text-muted: #64748B;
-      --text-light: #94A3B8;
-      --border-light: #E2E8F0;
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 22px;
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-      --shadow-md: 0 8px 24px rgba(229, 9, 20, 0.08);
-      --shadow-lg: 0 16px 36px rgba(229, 9, 20, 0.12);
-      --mono: 'JetBrains Mono', monospace;
-      --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --accent: #047857;
+      --on-accent: #FFFFFF;
+      --accent-strong: #065F46;
+      --accent-soft: rgba(4, 120, 87, 0.08);
+      --accent-line: rgba(4, 120, 87, 0.24);
+      --accent-glow: rgba(5, 150, 105, 0.32);
+      --green: #059669;
+      --green-soft: rgba(16, 185, 129, 0.12);
+      --blue: #0284C7;
+      --blue-soft: rgba(2, 132, 199, 0.12);
+      --amber: #D97706;
+
+      --bg: #F1F4F3;
+      --bg-alt: #F5F8F7;
+      --surface: #FFFFFF;
+      --surface-glass: rgba(255, 255, 255, 0.72);
+      --text: #0B1220;
+      --text-2: #55607A;
+      --text-3: #8A94A8;
+      --line: #E4E8EF;
+      --line-strong: #CBD2DD;
+      --grid: rgba(11, 18, 32, 0.045);
+
+      --r-sm: 10px;
+      --r-md: 16px;
+      --r-lg: 24px;
+      --r-pill: 999px;
+      --shadow-1: 0 1px 2px rgba(11, 18, 32, 0.05), 0 2px 8px rgba(11, 18, 32, 0.04);
+      --shadow-2: 0 2px 4px rgba(11, 18, 32, 0.04), 0 12px 32px rgba(11, 18, 32, 0.08);
+      --shadow-3: 0 30px 80px -20px rgba(5, 150, 105, 0.22), 0 18px 40px -18px rgba(11, 18, 32, 0.18);
+
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --wrap: 1160px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --accent: #34D399;
+        --on-accent: #04130D;
+        --accent-strong: #6EE7B7;
+        --accent-soft: rgba(52, 211, 153, 0.1);
+        --accent-line: rgba(52, 211, 153, 0.28);
+        --accent-glow: rgba(52, 211, 153, 0.28);
+        --green: #34D399;
+        --green-soft: rgba(52, 211, 153, 0.12);
+        --blue: #38BDF8;
+        --blue-soft: rgba(56, 189, 248, 0.12);
+        --amber: #FBBF24;
+
+        --bg: #060B09;
+        --bg-alt: #0B1210;
+        --surface: #101917;
+        --surface-glass: rgba(10, 18, 15, 0.72);
+        --text: #F3F5F9;
+        --text-2: #A3ACBD;
+        --text-3: #6D7688;
+        --line: #20242F;
+        --line-strong: #323847;
+        --grid: rgba(255, 255, 255, 0.04);
+        --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.45);
+        --shadow-3: 0 30px 90px -20px rgba(52, 211, 153, 0.2), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+      }
     }
 
-    html {
-      scroll-behavior: smooth;
+    /* Always-dark surfaces: nav, hero, footer */
+    .dark {
+      --accent: #34D399; --on-accent: #04130D; --accent-strong: #6EE7B7;
+      --accent-soft: rgba(52, 211, 153, 0.12); --accent-line: rgba(52, 211, 153, 0.3); --accent-glow: rgba(52, 211, 153, 0.3);
+      --green: #34D399; --green-soft: rgba(52, 211, 153, 0.14);
+      --blue: #38BDF8; --blue-soft: rgba(56, 189, 248, 0.14); --amber: #FBBF24;
+      --bg: #050A08; --bg-alt: rgba(255, 255, 255, 0.045); --surface: rgba(12, 22, 19, 0.78);
+      --text: #F5F4F7; --text-2: #B4B0BD; --text-3: #7C7887;
+      --line: rgba(255, 255, 255, 0.1); --line-strong: rgba(255, 255, 255, 0.2);
+      --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-3: 0 40px 100px -20px rgba(45, 212, 191, 0.28), 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+      color: var(--text);
     }
 
+    /* ── Base ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 88px; }
     body {
       font-family: var(--sans);
-      background-color: var(--bg-white);
-      color: var(--text-main);
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-
-    /* Ambient Header Glow */
-    .bg-glow {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100vw;
-      max-width: 1200px;
-      height: 480px;
-      background: radial-gradient(circle at 50% 20%, rgba(229, 9, 20, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Navbar */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(14px);
-      background: rgba(255, 255, 255, 0.88);
-      border-bottom: 1px solid var(--border-light);
-      padding: 1rem 1.5rem;
-    }
-
-    .nav-container {
-      max-width: 1140px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text-main);
-      font-weight: 800;
-      font-size: 1.2rem;
-      letter-spacing: -0.5px;
-    }
-
-    .brand-badge {
-      background: var(--primary-red);
-      color: white;
-      padding: 4px 8px;
+    a { color: inherit; }
+    code {
+      font-family: var(--mono);
+      font-size: 0.86em;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 1px 6px;
       border-radius: 6px;
-      font-size: 0.72rem;
-      font-family: var(--mono);
-      font-weight: 700;
-      letter-spacing: 0.5px;
     }
+    svg.ic { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 1.5rem; position: relative; }
+    section { padding: 5.5rem 0; position: relative; }
 
-    .nav-links {
-      display: flex;
-      gap: 1.8rem;
-      align-items: center;
-      list-style: none;
+    /* ── Scroll progress + nav ─────────────────────────────────── */
+    .progress {
+      position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 200;
+      background: linear-gradient(90deg, var(--accent), #2DD4BF);
+      transform-origin: 0 50%; transform: scaleX(0);
     }
-
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text-muted);
-      font-size: 0.92rem;
-      font-weight: 600;
-      transition: color 0.2s ease;
+    .nav-shell {
+      position: fixed; inset: 0 0 auto 0; z-index: 100;
+      background: transparent;
+      border-bottom: 1px solid transparent;
+      transition: background 0.35s, border-color 0.35s, -webkit-backdrop-filter 0.35s, backdrop-filter 0.35s;
     }
-
-    .nav-links a:hover {
-      color: var(--primary-red);
+    .nav-shell.scrolled {
+      background: rgba(5, 10, 8, 0.86);
+      -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+      border-color: var(--line);
     }
-
-    .btn-nav {
-      background: var(--primary-red);
-      color: white !important;
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      box-shadow: 0 4px 12px var(--red-glow);
-      transition: all 0.2s ease !important;
+    nav { max-width: var(--wrap); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 14px 1.5rem; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.4px; }
+    .brand-mark { width: 26px; height: 26px; color: var(--accent); }
+    .badge {
+      font-family: var(--mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.6px;
+      background: var(--accent); color: var(--on-accent); padding: 3px 7px; border-radius: 6px;
     }
-
-    .btn-nav:hover {
-      background: var(--red-hover);
-      transform: translateY(-1px);
+    .nav-links { display: flex; gap: 0.35rem; align-items: center; list-style: none; }
+    .nav-links a:not(.btn) {
+      text-decoration: none; color: var(--text); font-size: 0.9rem; font-weight: 600;
+      padding: 8px 14px; position: relative; opacity: 0.85; transition: opacity 0.2s;
     }
-
-    /* Container */
-    .container {
-      max-width: 1140px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-      position: relative;
-      z-index: 1;
+    .nav-links a:not(.btn)::after {
+      content: ''; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; border-radius: 2px;
+      background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.35s var(--ease);
     }
+    .nav-links a:not(.btn):hover { opacity: 1; }
+    .nav-links a:not(.btn):hover::after { transform: scaleX(1); }
+    .nav-links li:last-child { margin-left: 0.6rem; }
 
-    /* Hero Section */
-    .hero {
-      padding: 4.5rem 0 3.5rem;
-      text-align: center;
-    }
-
-    .beta-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--red-subtle);
-      border: 1px solid var(--red-border);
-      padding: 6px 14px;
-      border-radius: 30px;
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--primary-red);
-      margin-bottom: 1.5rem;
-    }
-
-    .beta-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--primary-red);
-      animation: pulse 1.8s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.7; }
-      50% { transform: scale(1.3); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.7; }
-    }
-
-    .hero h1 {
-      font-size: 3.2rem;
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -1.2px;
-      max-width: 880px;
-      margin: 0 auto 1.2rem;
-      color: var(--text-main);
-    }
-
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--primary-red) 0%, #B91C1C 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      font-size: 1.18rem;
-      color: var(--text-muted);
-      max-width: 720px;
-      margin: 0 auto 2.4rem;
-      line-height: 1.6;
-    }
-
-    .hero-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 3.5rem;
-    }
-
+    /* ── Buttons ───────────────────────────────────────────────── */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 26px;
-      border-radius: var(--radius-sm);
-      font-size: 0.98rem;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 14px 24px; border-radius: var(--r-pill);
+      font: 700 0.96rem var(--sans); text-decoration: none; cursor: pointer;
+      border: 1px solid transparent; position: relative; overflow: hidden;
+      transition: background 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.3s var(--ease);
+      will-change: transform;
     }
-
-    .btn-primary {
-      background: var(--primary-red);
-      color: white;
-      box-shadow: 0 6px 20px var(--red-glow);
-      border: 1px solid var(--primary-red);
+    .btn-sm { padding: 9px 18px; font-size: 0.88rem; }
+    .btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 24px -6px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn-primary::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+      transform: translateX(-120%); transition: transform 0.7s var(--ease);
     }
+    .btn-primary:hover::after { transform: translateX(120%); }
+    .btn-primary:hover { box-shadow: 0 14px 34px -6px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line-strong); box-shadow: var(--shadow-1); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-outline { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
+    .btn-outline:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+    .btn-block { width: 100%; }
 
-    .btn-primary:hover {
-      background: var(--red-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 26px rgba(229, 9, 20, 0.35);
+    /* ── Hero ──────────────────────────────────────────────────── */
+    .hero { padding: calc(4.5rem + 64px) 0 10rem; background: var(--bg); overflow: hidden; isolation: isolate; }
+    .hero-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 56px 56px;
+      -webkit-mask-image: radial-gradient(ellipse 80% 70% at 60% 40%, #000 20%, transparent 75%);
+      mask-image: radial-gradient(ellipse 80% 70% at 60% 40%, #000 20%, transparent 75%);
     }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
+    .orb-1 { width: 620px; height: 620px; left: -160px; top: -220px; background: radial-gradient(circle, rgba(16, 185, 129, 0.5), transparent 65%); }
+    .orb-2 { width: 560px; height: 560px; right: -80px; top: -120px; background: radial-gradient(circle, rgba(20, 184, 166, 0.42), transparent 65%); }
+    .orb-3 { width: 520px; height: 520px; left: 38%; bottom: -260px; background: radial-gradient(circle, rgba(132, 204, 22, 0.22), transparent 65%); }
+    .hero-inner { display: grid; grid-template-columns: 1.02fr 1fr; gap: 3.5rem; align-items: center; }
 
-    .btn-secondary {
-      background: white;
-      color: var(--text-main);
-      border: 1px solid var(--border-light);
-      box-shadow: var(--shadow-sm);
+    .pill {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--accent);
+      padding: 7px 15px; border-radius: var(--r-pill);
+      font: 700 0.74rem var(--mono); letter-spacing: 0.4px;
     }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: relative; flex: none; }
+    .dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid currentColor; opacity: 0; animation: ping 2s var(--ease) infinite; }
+    @keyframes ping { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
 
-    .btn-secondary:hover {
-      border-color: var(--primary-red);
-      color: var(--primary-red);
-      transform: translateY(-2px);
+    .hero h1 { font-size: clamp(2.4rem, 4.7vw, 3.9rem); font-weight: 800; line-height: 1.06; letter-spacing: -0.035em; margin: 1.5rem 0 1.2rem; }
+    .hero h1 .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.12em; margin-bottom: -0.12em; }
+    .hero h1 .wi { display: inline-block; will-change: transform; }
+    .hero h1 .accent {
+      background: linear-gradient(120deg, #34D399 10%, #5EEAD4 55%, #34D399 90%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: sheen 6s linear infinite;
     }
+    @keyframes sheen { to { background-position: -200% 0; } }
+    .hero-sub { font-size: 1.08rem; color: var(--text-2); max-width: 540px; margin-bottom: 2rem; }
+    .hero-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+    .hero-note { font-size: 0.86rem; color: var(--text-3); max-width: 460px; }
 
-    /* App Preview Interactive Deck */
-    .preview-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-lg);
-      margin: 0 auto 4.5rem;
-      max-width: 960px;
+    /* ── Hero console ──────────────────────────────────────────── */
+    .stage { perspective: 1400px; }
+    .console {
+      -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-lg); box-shadow: var(--shadow-3);
+      padding: 1.25rem; transform-origin: 50% 0; will-change: transform;
       position: relative;
     }
-
-    .preview-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-light);
-      padding-bottom: 1rem;
-      margin-bottom: 1.2rem;
+    .console::before {
+      content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+      background: linear-gradient(140deg, var(--accent-line), transparent 35%, transparent 65%, var(--accent-line));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
     }
-
-    .terminal-dots {
-      display: flex;
-      gap: 6px;
+    .console-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line); }
+    .lights { display: flex; gap: 7px; }
+    .lights i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+    .lights i:nth-child(1) { background: #EF4444; } .lights i:nth-child(2) { background: #F59E0B; } .lights i:nth-child(3) { background: #10B981; }
+    .tabs { display: flex; gap: 4px; background: var(--bg-alt); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 4px; position: relative; }
+    .tab {
+      font: 700 0.72rem var(--mono); letter-spacing: 0.4px; color: var(--text-2);
+      background: none; border: 0; padding: 7px 14px; border-radius: var(--r-pill);
+      cursor: pointer; position: relative; z-index: 1; transition: color 0.25s;
     }
-
-    .terminal-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
+    .tab[aria-selected="true"] { color: var(--on-accent); }
+    .tab-ink { position: absolute; top: 4px; bottom: 4px; left: 4px; width: 0; background: var(--accent); border-radius: var(--r-pill); box-shadow: 0 4px 12px -2px var(--accent-glow); }
+    .panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .panel[hidden] { display: none; }
+    .svc {
+      background: var(--bg-alt); border: 1px solid var(--line); border-radius: var(--r-md);
+      padding: 1rem; transition: border-color 0.25s, transform 0.35s var(--ease);
     }
+    .svc:hover { border-color: var(--accent-line); transform: translateY(-3px); }
+    .svc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .svc-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+    .svc-name { font-weight: 700; font-size: 0.93rem; margin-bottom: 2px; }
+    .svc-url { font: 400 0.75rem var(--mono); color: var(--text-2); word-break: break-all; }
+    .tag { font: 700 0.66rem var(--mono); padding: 3px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; color: var(--green); background: var(--green-soft); }
+    .tag.info { color: var(--blue); background: var(--blue-soft); }
+    .tag .dot { width: 6px; height: 6px; }
 
-    .dot-red { background: #EF4444; }
-    .dot-yellow { background: #F59E0B; }
-    .dot-green { background: #10B981; }
+    /* ── Marquee ───────────────────────────────────────────────── */
+    .marquee { border-block: 1px solid var(--line); background: var(--surface); margin-top: 4.5rem; overflow: hidden; padding: 1.1rem 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+    .marquee-track { display: flex; gap: 3rem; width: max-content; will-change: transform; }
+    .marquee-track span { font: 700 0.82rem var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); white-space: nowrap; display: inline-flex; align-items: center; gap: 3rem; }
+    .marquee-track span::after { content: '⬡'; color: var(--accent); font-size: 0.9rem; }
 
-    .preview-tabs {
-      display: flex;
-      gap: 8px;
+    /* ── Section headings ──────────────────────────────────────── */
+    .head { text-align: center; margin-bottom: 3.5rem; }
+    .eyebrow { font: 700 0.78rem var(--mono); color: var(--accent); letter-spacing: 1.2px; text-transform: uppercase; display: inline-block; margin-bottom: 12px; }
+    .head h2 { font-size: clamp(1.9rem, 3.6vw, 2.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+    .head p { color: var(--text-2); font-size: 1.05rem; max-width: 600px; margin: 12px auto 0; }
+
+    /* ── Cards (spotlight + tilt) ──────────────────────────────── */
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: 2.2rem; position: relative; overflow: hidden; box-shadow: var(--shadow-1);
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: border-color 0.3s, box-shadow 0.4s var(--ease);
+      transform-style: preserve-3d; will-change: transform;
     }
-
-    .preview-tab {
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-family: var(--mono);
-      font-weight: 700;
-      border: 1px solid var(--border-light);
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
+    .card::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.35s;
+      background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), var(--accent-soft), transparent 60%);
     }
+    .card:hover { border-color: var(--accent-line); box-shadow: var(--shadow-2); }
+    .card:hover::after { opacity: 1; }
+    .card > * { position: relative; z-index: 1; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; perspective: 1400px; }
+    .chip { display: inline-block; font: 700 0.7rem var(--mono); letter-spacing: 0.5px; padding: 4px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); margin-bottom: 1.1rem; }
+    .card h3 { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+    .card p { color: var(--text-2); font-size: 0.96rem; margin-bottom: 1.5rem; }
+    .features { list-style: none; margin-bottom: 2rem; display: grid; gap: 0.7rem; }
+    .features li { display: flex; align-items: flex-start; gap: 11px; font-size: 0.93rem; font-weight: 500; }
+    .features .tick { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; margin-top: 2px; }
+    .features .tick svg { width: 11px; height: 11px; stroke-width: 3.2; }
 
-    .preview-tab.active {
-      background: var(--primary-red);
-      color: white;
-      border-color: var(--primary-red);
+    /* ── Steps ─────────────────────────────────────────────────── */
+    .band { background: var(--surface); border-block: 1px solid var(--line); }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; position: relative; }
+    .steps-line { position: absolute; top: 46px; left: 8%; right: 8%; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+    .steps-line i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #2DD4BF); transform-origin: 0 50%; }
+    .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 1.8rem; box-shadow: var(--shadow-1); position: relative; }
+    .step-num {
+      font: 800 1rem var(--mono); width: 42px; height: 42px; border-radius: 12px;
+      background: var(--accent); color: var(--on-accent); display: grid; place-items: center; margin-bottom: 1.2rem;
+      box-shadow: 0 8px 20px -6px var(--accent-glow);
     }
+    .step h4 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 0.45rem; }
+    .step p { color: var(--text-2); font-size: 0.93rem; }
 
-    .preview-body {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.2rem;
-      text-align: left;
+    /* ── Download centre ───────────────────────────────────────── */
+    .dl-zone { padding: 0; margin-top: -6.5rem; z-index: 2; }
+    .tabs-lg { width: max-content; max-width: 100%; margin: 0 auto 1.2rem; background: var(--surface); box-shadow: var(--shadow-2); padding: 6px; }
+    .tabs-lg .tab { font: 700 0.95rem var(--sans); letter-spacing: 0; padding: 11px 24px; display: inline-flex; align-items: center; gap: 8px; color: var(--text); }
+    .tabs-lg .tab[aria-selected="true"] { color: var(--on-accent); }
+    .tabs-lg .tab-ink { top: 6px; bottom: 6px; left: 6px; }
+    .dl-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-2); overflow: hidden; }
+    .dl-app { display: grid; grid-template-columns: 340px 1fr; }
+    .dl-app[hidden] { display: none; }
+    .dl-side { padding: 2.2rem; background: var(--bg-alt); border-right: 1px solid var(--line); }
+    .dl-main { padding: 2.2rem 2.6rem; }
+    .label { font: 700 0.7rem var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 0.9rem; }
+    .dl-title { display: flex; align-items: center; gap: 14px; margin-bottom: 1.8rem; }
+    .dl-icon { width: 52px; height: 52px; border-radius: 16px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; box-shadow: 0 10px 24px -8px var(--accent-glow); flex: none; }
+    .dl-icon svg { width: 24px; height: 24px; }
+    .dl-title h3 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+    .dl-title small { font-size: 0.88rem; color: var(--text-2); }
+    .dl-row { display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem; align-items: start; padding: 1.6rem 0; border-top: 1px solid var(--line); }
+    .dl-row .label { margin: 0.95rem 0 0; }
+    .dl-row .btn { min-width: 260px; }
+    .dl-row p { font-size: 0.84rem; color: var(--text-2); margin-top: 0.6rem; }
+    .meta { display: grid; gap: 0; font: 400 0.8rem var(--mono); color: var(--text-2); }
+    .meta div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px dashed var(--line-strong); }
+    .meta div:last-child { border-bottom: 0; }
+    .meta dt { color: var(--text-3); } .meta dd { color: var(--text); font-weight: 600; text-align: right; }
+    .dl-tested { font-size: 0.82rem; color: var(--text-3); margin-top: 1.2rem; }
+    .notice {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+      border-radius: var(--r-md); padding: 1.2rem 1.5rem; margin-top: 1.2rem; box-shadow: var(--shadow-1);
     }
+    .notice-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }
+    .notice strong { display: block; color: var(--accent); font-weight: 800; margin-bottom: 4px; }
+    .notice p { font-size: 0.9rem; line-height: 1.55; color: var(--text-2); }
+    .notice a { color: var(--accent); font-weight: 700; }
 
-    .service-box {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 1rem;
-      transition: border-color 0.2s;
+    /* ── Roadmap ───────────────────────────────────────────────── */
+    .road { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; }
+    .road .card { padding: 1.5rem; border-radius: var(--r-md); justify-content: flex-start; }
+    .road h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .road p { font-size: 0.88rem; margin: 0; }
+    .state { font: 700 0.68rem var(--mono); letter-spacing: 0.4px; display: inline-flex; align-items: center; gap: 7px; padding: 4px 9px; border-radius: 6px; margin-bottom: 0.9rem; align-self: flex-start; }
+    .state.now { background: var(--accent-soft); color: var(--accent); }
+    .state.later { background: var(--bg-alt); color: var(--text-2); border: 1px solid var(--line); }
+
+    /* ── CTA + footer ──────────────────────────────────────────── */
+    .cta-band {
+      padding: 9rem 0 5.5rem; text-align: center; color: #fff; overflow: hidden;
+      background: linear-gradient(135deg, #064E3B 0%, #047857 45%, #0D9488 100%);
+      -webkit-clip-path: polygon(0 5.5rem, 100% 0, 100% 100%, 0 100%); clip-path: polygon(0 5.5rem, 100% 0, 100% 100%, 0 100%);
     }
-
-    .service-box:hover {
-      border-color: var(--red-border);
+    .cta-band::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.22;
+      background-image: linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
+      background-size: 44px 44px;
+      -webkit-mask-image: radial-gradient(ellipse at 50% 100%, #000, transparent 70%); mask-image: radial-gradient(ellipse at 50% 100%, #000, transparent 70%);
     }
+    .cta h2 { font-size: clamp(1.8rem, 3.6vw, 2.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; margin-bottom: 0.8rem; }
+    .cta p { opacity: 0.92; max-width: 520px; margin: 0 auto 2rem; }
+    .cta .btn { background: #fff; color: #065F46; box-shadow: 0 12px 30px -10px rgba(0,0,0,0.45); }
+    footer { background: var(--bg); padding: 3rem 0 2rem; }
+    .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem; }
+    .dev { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; }
+    .dev h4 { font-weight: 800; font-size: 1rem; } .dev p { color: var(--text-2); font-size: 0.82rem; }
+    .social { display: flex; gap: 10px; flex-wrap: wrap; }
+    .social .coffee { border-color: color-mix(in srgb, var(--amber) 50%, transparent); color: var(--amber); }
+    .foot-end { border-top: 1px solid var(--line); padding-top: 1.5rem; text-align: center; color: var(--text-3); font: 400 0.8rem var(--mono); }
 
-    .service-box-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 980px) {
+      .road { grid-template-columns: 1fr 1fr; }
+      .hero-inner { grid-template-columns: 1fr; gap: 3rem; }
+      .hero { padding-top: calc(3.5rem + 60px); }
     }
-
-    .service-status {
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #10B981;
-      background: rgba(16, 185, 129, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
+    @media (max-width: 860px) {
+      section { padding: 4rem 0; }
+      .dl-zone { padding: 0; }
+      .cta-band { padding: 8rem 0 4.5rem; }
+      .grid-2, .steps { grid-template-columns: 1fr; }
+      .steps-line { display: none; }
+      .nav-links li:not(:last-child) { display: none; }
+      .dl-app { grid-template-columns: 1fr; }
+      .dl-side { border-right: 0; border-top: 1px solid var(--line); order: 2; }
+      .dl-row { grid-template-columns: 1fr; gap: 0.2rem; }
+      .dl-row .label { margin: 0 0 0.8rem; }
     }
-
-    .service-url {
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      color: var(--primary-red);
-      word-break: break-all;
+    @media (max-width: 560px) {
+      .wrap { padding: 0 1rem; }
+      nav { padding: 12px 1rem; }
+      .road { grid-template-columns: 1fr; }
+      .card { padding: 1.5rem; }
+      .dl-side, .dl-main { padding: 1.5rem; }
+      .hero-actions .btn, .dl-row .btn { width: 100%; min-width: 0; }
+      .tabs-lg .tab { padding: 10px 16px; font-size: 0.88rem; }
+      .panel { grid-template-columns: 1fr; }
+      .brand .badge { display: none; }
     }
-
-    /* Section Titles */
-    .section-title-wrap {
-      text-align: center;
-      margin-bottom: 3.5rem;
-    }
-
-    .section-tag {
-      font-family: var(--mono);
-      color: var(--primary-red);
-      font-weight: 700;
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      display: inline-block;
-    }
-
-    .section-title {
-      font-size: 2.3rem;
-      font-weight: 800;
-      letter-spacing: -0.8px;
-      color: var(--text-main);
-    }
-
-    .section-subtitle {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-      max-width: 600px;
-      margin: 8px auto 0;
-    }
-
-    /* Architecture Split (Server vs Client) */
-    .split-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-bottom: 5rem;
-    }
-
-    .app-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 2.2rem;
-      box-shadow: var(--shadow-sm);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.25s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .app-card:hover {
-      border-color: var(--red-border);
-      box-shadow: var(--shadow-md);
-      transform: translateY(-3px);
-    }
-
-    .app-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: var(--primary-red);
-    }
-
-    .app-card-badge {
-      display: inline-block;
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: var(--red-subtle);
-      color: var(--primary-red);
-      margin-bottom: 1rem;
-    }
-
-    .app-card h3 {
-      font-size: 1.55rem;
-      font-weight: 800;
-      margin-bottom: 0.75rem;
-      color: var(--text-main);
-    }
-
-    .app-card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .feature-list {
-      list-style: none;
-      margin-bottom: 2rem;
-    }
-
-    .feature-list li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.92rem;
-      color: var(--text-main);
-      margin-bottom: 0.65rem;
-      font-weight: 500;
-    }
-
-    .check-icon {
-      color: var(--primary-red);
-      font-weight: bold;
-    }
-
-    /* How to Use 3-Step Walkthrough */
-    .steps-section {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 4rem 2rem;
-      margin-bottom: 5rem;
-      border: 1px solid var(--border-light);
-    }
-
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.8rem;
-    }
-
-    .step-box {
-      background: white;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 1.8rem;
-      box-shadow: var(--shadow-sm);
-      position: relative;
-    }
-
-    .step-number {
-      font-family: var(--mono);
-      font-size: 1.1rem;
-      font-weight: 800;
-      background: var(--primary-red);
-      color: white;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      margin-bottom: 1.2rem;
-    }
-
-    .step-box h4 {
-      font-size: 1.18rem;
-      font-weight: 800;
-      margin-bottom: 0.5rem;
-    }
-
-    .step-box p {
-      color: var(--text-muted);
-      font-size: 0.92rem;
-    }
-
-    /* Download Deck Section */
-    .download-section {
-      margin-bottom: 5rem;
-    }
-
-    .beta-alert-box {
-      background: #FFF5F5;
-      border: 1px solid rgba(229, 9, 20, 0.28);
-      border-left: 4px solid var(--primary-red);
-      border-radius: var(--radius-md);
-      padding: 1.2rem 1.6rem;
-      margin-bottom: 2.2rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.05);
-    }
-
-    .beta-alert-icon {
-      font-size: 1.5rem;
-      line-height: 1;
-    }
-
-    .beta-alert-text strong {
-      display: block;
-      color: var(--primary-red);
-      font-size: 0.98rem;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .beta-alert-text p {
-      color: var(--text-main);
-      font-size: 0.9rem;
-      line-height: 1.55;
-    }
-
-    .beta-alert-text a {
-      color: var(--primary-red);
-      font-weight: 700;
-      text-decoration: underline;
-    }
-
-    .download-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-
-    .dl-card {
-      border: 2px solid var(--red-border);
-      border-radius: var(--radius-lg);
-      padding: 2.2rem;
-      background: white;
-      box-shadow: var(--shadow-md);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .dl-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1.2rem;
-    }
-
-    .dl-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 1.5rem;
-      background: var(--bg-surface);
-      padding: 1rem;
-      border-radius: var(--radius-sm);
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .dl-meta span {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .dl-meta strong {
-      color: var(--text-main);
-    }
-
-    /* Roadmap Section */
-    .roadmap-section {
-      margin-bottom: 5rem;
-    }
-
-    .roadmap-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.2rem;
-    }
-
-    .roadmap-item {
-      background: white;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 1.4rem;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .roadmap-status {
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 4px;
-      margin-bottom: 0.8rem;
-    }
-
-    .status-in-progress {
-      background: rgba(229, 9, 20, 0.1);
-      color: var(--primary-red);
-    }
-
-    .status-next {
-      background: rgba(100, 116, 139, 0.1);
-      color: var(--text-muted);
-    }
-
-    .roadmap-item h4 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-
-    .roadmap-item p {
-      color: var(--text-muted);
-      font-size: 0.88rem;
-    }
-
-    /* Footer */
-    footer {
-      border-top: 1px solid var(--border-light);
-      background: var(--bg-surface);
-      padding: 3.5rem 0 2.5rem;
-    }
-
-    .footer-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .dev-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .dev-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--primary-red);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.1rem;
-    }
-
-    .social-links {
-      display: flex;
-      gap: 10px;
-    }
-
-    .social-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-light);
-      background: white;
-      color: var(--text-main);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .social-btn:hover {
-      border-color: var(--primary-red);
-      color: var(--primary-red);
-      transform: translateY(-1px);
-    }
-
-    .footer-bottom {
-      border-top: 1px solid var(--border-light);
-      padding-top: 1.5rem;
-      text-align: center;
-      color: var(--text-light);
-      font-size: 0.85rem;
-      font-family: var(--mono);
-    }
-
-    /* Responsive */
-    @media (max-width: 868px) {
-      .hero h1 { font-size: 2.4rem; }
-      .split-grid, .download-grid, .steps-grid { grid-template-columns: 1fr; }
-      .tv-banner { flex-direction: column; text-align: left; }
-      .nav-links { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <div class="bg-glow"></div>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 19h16"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-magnet" viewBox="0 0 24 24"><path d="M5 4h4v8a3 3 0 0 0 6 0V4h4v8a7 7 0 0 1-14 0zM5 8h4M15 8h4"/></symbol>
+    <symbol id="i-cast" viewBox="0 0 24 24"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M3 12a8 8 0 0 1 8 8M3 16a4 4 0 0 1 4 4M3 20h.01"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-disk" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0M12 20h.01"/></symbol>
+    <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M11 9l-2 3h3l-2 3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5-5m5 5-5 5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 2v3M12 2v3"/></symbol>
+  </svg>
 
-  <!-- Navbar -->
-  <nav>
-    <div class="nav-container">
+  <div class="progress" id="progress"></div>
+
+  <div class="nav-shell dark">
+    <nav id="nav">
       <a href="#" class="brand">
-        <span style="color: var(--primary-red); font-size: 1.4rem;">⬡</span>
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5 20.2 7.25v9.5L12 21.5l-8.2-4.75v-9.5z"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>
         <span>PocketNode</span>
-        <span class="brand-badge">BETA</span>
+        <span class="badge">BETA</span>
       </a>
       <ul class="nav-links">
         <li><a href="#about">Overview</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="./torrent-lab.html" style="color: var(--primary-red); font-weight: 700;">🧪 Stream Lab</a></li>
         <li><a href="#roadmap">Roadmap</a></li>
-        <li><a href="#downloads" class="btn-nav">Download APK</a></li>
+        <li><a href="#downloads" class="btn btn-primary btn-sm" data-magnetic>Download APK</a></li>
       </ul>
-    </div>
-  </nav>
+    </nav>
+  </div>
 
-  <main class="container">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="beta-pill">
-        <span class="beta-dot"></span>
-        <span>PUBLIC BETA PHASE // ACTIVELY IN DEVELOPMENT</span>
+  <main>
+    <!-- Hero -->
+    <section class="hero dark">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="hero-grid"></div>
       </div>
-      <h1>Your Spare Phone Is Now A <span>24/7 Media Server</span></h1>
-      <p>
-        Zero electricity cost. Silent operation. PocketNode turns any Android device into an autonomous self-hosted node running embedded Jellyfin, Jackett Torznab, BitTorrent engine, and Telegram remote downloads.
-        <br><br>
-        <span style="display: inline-block; font-size: 0.9rem; color: var(--primary-red); font-weight: 600; background: var(--red-subtle); padding: 4px 14px; border-radius: 6px; border: 1px solid var(--red-border);">
-          ⚠️ Active Beta Phase: Both Client & Server apps are currently in open beta testing.
-        </span>
-      </p>
-      <div class="hero-actions">
-        <a href="#downloads" class="btn btn-primary">
-          <span>📥 Download Server & Client APK</span>
-        </a>
-        <a href="./torrent-lab.html" class="btn btn-secondary" style="border-color: var(--primary-red); color: var(--primary-red); font-weight: 700;">
-          <span>🧪 Torrent Stream Lab</span>
-        </a>
-        <a href="#how-it-works" class="btn btn-secondary">
-          <span>⚡ How It Works</span>
-        </a>
-      </div>
-
-      <!-- Interactive Node Status Mockup -->
-      <div class="preview-card" id="about">
-        <div class="preview-header">
-          <div class="terminal-dots">
-            <span class="terminal-dot dot-red"></span>
-            <span class="terminal-dot dot-yellow"></span>
-            <span class="terminal-dot dot-green"></span>
+      <div class="wrap hero-inner">
+        <div>
+          <div class="pill" data-hero>
+            <span class="dot"></span>
+            <span>PUBLIC BETA // ACTIVELY IN DEVELOPMENT</span>
           </div>
-          <div class="preview-tabs">
-            <button class="preview-tab active" id="tab-endpoints">DAEMON STATUS</button>
-            <button class="preview-tab" id="tab-specs">SYSTEM TELEMETRY</button>
-          </div>
-        </div>
-        <div class="preview-body" id="preview-content">
-          <div class="service-box">
-            <div class="service-box-title">
-              <span>🎬 Jellyfin Media Server</span>
-              <span class="service-status">ACTIVE</span>
-            </div>
-            <div class="service-url">http://pocketnode.local:8096</div>
-          </div>
-          <div class="service-box">
-            <div class="service-box-title">
-              <span>🌐 Web Control Deck</span>
-              <span class="service-status">ACTIVE</span>
-            </div>
-            <div class="service-url">http://pocketnode.local:8080</div>
-          </div>
-          <div class="service-box">
-            <div class="service-box-title">
-              <span>🧲 Jackett Torznab</span>
-              <span class="service-status">ACTIVE</span>
-            </div>
-            <div class="service-url">http://pocketnode.local:9117</div>
-          </div>
-          <div class="service-box">
-            <div class="service-box-title">
-              <span>📺 VLC / DLNA Cast</span>
-              <span class="service-status">ACTIVE</span>
-            </div>
-            <div class="service-url">http://pocketnode.local:8090</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Architecture Section (Server vs Client) -->
-    <section>
-      <div class="section-title-wrap">
-        <span class="section-tag">// TWO DEDICATED APPS</span>
-        <h2 class="section-title">The Complete PocketNode Ecosystem</h2>
-        <p class="section-subtitle">A high-performance dual-app architecture tailored for zero friction.</p>
-      </div>
-
-      <div class="split-grid">
-        <!-- Server Card -->
-        <div class="app-card">
-          <div>
-            <span class="app-card-badge">THE HOST DAEMON</span>
-            <h3>PocketNode Core (Server)</h3>
-            <p>Runs as a persistent foreground Android service on your server phone with lock-screen wake-locks.</p>
-            <ul class="feature-list">
-              <li><span class="check-icon">✓</span> Embedded Jellyfin Media Server with REST API</li>
-              <li><span class="check-icon">✓</span> Native Libtorrent4j C++ engine (DHT + Magnet)</li>
-              <li><span class="check-icon">✓</span> Jackett multi-indexer aggregator on port 9117</li>
-              <li><span class="check-icon">✓</span> Telegram Bot for remote one-click downloads</li>
-              <li><span class="check-icon">✓</span> Zero-config Wi-Fi mDNS broadcast</li>
-            </ul>
-          </div>
-          <a href="#downloads" class="btn btn-primary" style="text-align: center; justify-content: center;">
-            Download Server APK
-          </a>
-        </div>
-
-        <!-- Client Card -->
-        <div class="app-card">
-          <div>
-            <span class="app-card-badge">THE CONTROLLER & PLAYER</span>
-            <h3>PocketNode Client</h3>
-            <p>Install on your daily phone, tablet, or Android TV to discover and stream from your PocketNode daemon.</p>
-            <ul class="feature-list">
-              <li><span class="check-icon">✓</span> Instant mDNS zero-setup discovery on Wi-Fi</li>
-              <li><span class="check-icon">✓</span> Direct media stream with hardware decoding</li>
-              <li><span class="check-icon">✓</span> Remote transfer queue management & stats</li>
-              <li><span class="check-icon">✓</span> Clean modern tactical HUD UI</li>
-              <li><span class="check-icon">✓</span> Background push notifications for completed media</li>
-            </ul>
-          </div>
-          <a href="#downloads" class="btn btn-secondary" style="text-align: center; justify-content: center;">
-            Download Client APK
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- How To Use (3 Steps) -->
-    <section class="steps-section" id="how-it-works">
-      <div class="section-title-wrap">
-        <span class="section-tag">// ZERO ROUTER TINKERING</span>
-        <h2 class="section-title">How To Set Up In 3 Minutes</h2>
-        <p class="section-subtitle">No port-forwarding, no Linux CLI knowledge, no dynamic DNS headaches required.</p>
-      </div>
-
-      <div class="steps-grid">
-        <div class="step-box">
-          <div class="step-number">01</div>
-          <h4>Install Server APK</h4>
-          <p>Install <strong>PocketNode Core</strong> on any spare Android phone connected to your Wi-Fi, grant storage permissions, and tap <strong>START DAEMON</strong>.</p>
-        </div>
-        <div class="step-box">
-          <div class="step-number">02</div>
-          <h4>Zero-Config Discovery</h4>
-          <p>Open <strong>PocketNode Client</strong> on your main device. It automatically detects <code>pocketnode.local</code> on the network with no manual IP entry needed.</p>
-        </div>
-        <div class="step-box">
-          <div class="step-number">03</div>
-          <h4>Stream & Download</h4>
-          <p>Send magnet links directly from Telegram, search torrents via Jackett, or play high-bitrate video straight to your Smart TV or phone.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Downloads Hub -->
-    <section class="download-section" id="downloads">
-      <div class="section-title-wrap">
-        <span class="section-tag">// GET THE BETA BUILDS</span>
-        <h2 class="section-title">Download PocketNode APKs</h2>
-        <p class="section-subtitle">Tested on Android 8.0 through Android 15 (ARM64 & ARMv7).</p>
-      </div>
-
-      <!-- Beta Alert Banner -->
-      <div class="beta-alert-box">
-        <div class="beta-alert-icon">🧪</div>
-        <div class="beta-alert-text">
-          <strong>Notice: Both Apps Are Currently In The Beta Phase</strong>
-          <p>
-            PocketNode Core (Server) and PocketNode Client are in active development and testing. While all core services (Jellyfin, Jackett, BitTorrent, Telegram Bot) are fully operational, you may occasionally see visual enhancements, hot-fixes, or experimental features. If you spot any bugs or have feedback, please open an issue on <a href="https://github.com/uju11/pocket_server/issues" target="_blank" rel="noopener noreferrer">GitHub</a> or connect with <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer">Ujjwal on LinkedIn</a>!
+          <h1 id="headline" aria-label="Your Spare Phone Is Now A 24/7 Media Server">Your Spare Phone Is Now A <em class="accent" style="font-style:normal">24/7 Media Server</em></h1>
+          <p class="hero-sub" data-hero>
+            Zero electricity cost. Silent operation. PocketNode turns any Android device into an autonomous self-hosted node running embedded Jellyfin, Jackett Torznab, BitTorrent engine, and Telegram remote downloads.
           </p>
-        </div>
-      </div>
-
-      <div class="download-grid">
-        <!-- Download Core Server -->
-        <div class="dl-card">
-          <div>
-            <div class="dl-head">
-              <div>
-                <h3 style="font-size: 1.35rem; font-weight: 800;">PocketNode Core (Server)</h3>
-                <span style="font-size: 0.85rem; color: var(--text-muted);">Self-Hosted Media Server APK</span>
-              </div>
-              <span class="beta-pill" style="margin: 0;">BETA</span>
-            </div>
-            <div class="dl-meta">
-              <span><strong>File:</strong> pocketnode-server.apk</span>
-              <span><strong>Size:</strong> ~62.9 MB</span>
-              <span><strong>Architecture:</strong> ARM64-v8a, armeabi-v7a</span>
-              <span><strong>Requires:</strong> Android 8.0+ (Oreo or newer)</span>
-              <span><strong>Package:</strong> com.remotemedia</span>
-            </div>
+          <div class="hero-actions" data-hero>
+            <a href="#downloads" class="btn btn-primary" data-magnetic>
+              <svg class="ic"><use href="#i-download"/></svg> Download for Android
+            </a>
+            <a href="#how-it-works" class="btn btn-ghost" data-magnetic>
+              <svg class="ic"><use href="#i-bolt"/></svg> How It Works
+            </a>
           </div>
-          <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-server.apk" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="justify-content: center;">
-            <span>📥 Download Server APK (Latest)</span>
-          </a>
+          <p class="hero-note" data-hero>Both the server and client apps are in open beta. Pick the one you need in the download centre below.</p>
         </div>
 
-        <!-- Download Client -->
-        <div class="dl-card">
-          <div>
-            <div class="dl-head">
-              <div>
-                <h3 style="font-size: 1.35rem; font-weight: 800;">PocketNode Client</h3>
-                <span style="font-size: 0.85rem; color: var(--text-muted);">Android TV & Mobile Player APK</span>
+        <!-- Node status console -->
+        <div class="stage">
+          <div class="console" id="console">
+            <div class="console-head">
+              <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+              <div class="tabs" role="tablist" aria-label="Node status">
+                <span class="tab-ink" aria-hidden="true"></span>
+                <button class="tab" role="tab" id="tab-endpoints" aria-selected="true" aria-controls="panel-endpoints">DAEMON STATUS</button>
+                <button class="tab" role="tab" id="tab-specs" aria-selected="false" aria-controls="panel-specs">TELEMETRY</button>
               </div>
-              <span class="beta-pill" style="margin: 0;">BETA</span>
             </div>
-            <div class="dl-meta">
-              <span><strong>File:</strong> pocketnode-client.apk</span>
-              <span><strong>Size:</strong> ~21.4 MB</span>
-              <span><strong>Architecture:</strong> Universal (TV, Phone, Tablet)</span>
-              <span><strong>Requires:</strong> Android 8.0+</span>
-              <span><strong>Package:</strong> com.pocketnode.client</span>
+
+            <div class="panel" id="panel-endpoints" role="tabpanel" aria-labelledby="tab-endpoints">
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-play"/></svg></span><span class="tag"><span class="dot"></span>ACTIVE</span></div>
+              <div class="svc-name">Jellyfin Media Server</div>
+              <div class="svc-url">http://pocketnode.local:8096</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-globe"/></svg></span><span class="tag"><span class="dot"></span>ACTIVE</span></div>
+              <div class="svc-name">Web Control Deck</div>
+              <div class="svc-url">http://pocketnode.local:8080</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-magnet"/></svg></span><span class="tag"><span class="dot"></span>ACTIVE</span></div>
+              <div class="svc-name">Jackett Torznab</div>
+              <div class="svc-url">http://pocketnode.local:9117</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-cast"/></svg></span><span class="tag"><span class="dot"></span>ACTIVE</span></div>
+              <div class="svc-name">VLC / DLNA Cast</div>
+              <div class="svc-url">http://pocketnode.local:8090</div>
             </div>
           </div>
-          <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-client.apk" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="justify-content: center; border-color: var(--primary-red); color: var(--primary-red);">
-            <span>📥 Download Client APK (Latest)</span>
-          </a>
+
+          <div class="panel" id="panel-specs" role="tabpanel" aria-labelledby="tab-specs" hidden>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-cpu"/></svg></span><span class="tag info">37°C CELL</span></div>
+              <div class="svc-name">CPU &amp; Thermal Sensor</div>
+              <div class="svc-url">Octa-Core ARM64 • Governor: Schedutil</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-disk"/></svg></span><span class="tag info">128 GB UFS</span></div>
+              <div class="svc-name">Storage Array</div>
+              <div class="svc-url">Mount: /storage/emulated/0/PocketNode</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-wifi"/></svg></span><span class="tag">ZERO-CONFIG</span></div>
+              <div class="svc-name">Network Binding</div>
+              <div class="svc-url">mDNS: pocketnode.local (Wi-Fi 5GHz)</div>
+            </div>
+            <div class="svc">
+              <div class="svc-top"><span class="svc-icon"><svg class="ic"><use href="#i-battery"/></svg></span><span class="tag">CHARGING</span></div>
+              <div class="svc-name">Battery &amp; Power</div>
+              <div class="svc-url">Continuous AC Dock • Lock-free daemon</div>
+            </div>
+          </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Upcoming Roadmap -->
-    <section class="roadmap-section" id="roadmap">
-      <div class="section-title-wrap">
-        <span class="section-tag">// PRODUCT EVOLUTION</span>
-        <h2 class="section-title">Upcoming Features</h2>
-        <p class="section-subtitle">What we're actively coding for upcoming releases.</p>
-      </div>
+    <!-- Download centre -->
+    <section class="dl-zone" id="downloads">
+      <div class="wrap">
+        <div class="tabs tabs-lg" role="tablist" aria-label="Choose an app" data-reveal>
+          <span class="tab-ink" aria-hidden="true"></span>
+          <button class="tab" role="tab" id="tab-server" aria-selected="true" aria-controls="app-server"><svg class="ic"><use href="#i-disk"/></svg> Server</button>
+          <button class="tab" role="tab" id="tab-client" aria-selected="false" aria-controls="app-client"><svg class="ic"><use href="#i-play"/></svg> Client</button>
+        </div>
 
-      <div class="roadmap-grid">
-        <div class="roadmap-item">
-          <span class="roadmap-status status-in-progress">IN DEVELOPMENT</span>
-          <h4>LG webOS TV App</h4>
-          <p>Native client tailored for LG Smart TVs with Magic Remote navigation and direct Jellyfin 4K HDR playback.</p>
+        <div class="dl-panel" data-reveal>
+          <div class="dl-app" id="app-server" role="tabpanel" aria-labelledby="tab-server">
+            <aside class="dl-side">
+              <span class="label">Build details</span>
+              <dl class="meta">
+                <div><dt>File</dt><dd>pocketnode-server.apk</dd></div>
+                <div><dt>Size</dt><dd>~62.9 MB</dd></div>
+                <div><dt>Architecture</dt><dd>ARM64-v8a, armeabi-v7a</dd></div>
+                <div><dt>Requires</dt><dd>Android 8.0+</dd></div>
+                <div><dt>Package</dt><dd>com.remotemedia</dd></div>
+              </dl>
+              <p class="dl-tested">Tested on Android 8.0 through Android 15 (ARM64 &amp; ARMv7).</p>
+            </aside>
+            <div class="dl-main">
+              <div class="dl-title">
+                <span class="dl-icon"><svg class="ic"><use href="#i-disk"/></svg></span>
+                <div>
+                  <h3>PocketNode Core (Server)</h3>
+                  <small>Self-Hosted Media Server APK · for your spare phone</small>
+                </div>
+              </div>
+              <div class="dl-row">
+                <span class="label">Current version</span>
+                <div>
+                  <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-server.apk" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-magnetic>
+                    <svg class="ic"><use href="#i-download"/></svg> Download Server APK
+                  </a>
+                  <p>Latest beta build</p>
+                </div>
+              </div>
+              <div class="dl-row">
+                <span class="label">Other builds</span>
+                <div>
+                  <a href="https://github.com/uju11/pocket_server/releases" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+                    <svg class="ic"><use href="#i-code"/></svg> All releases on GitHub
+                  </a>
+                  <p>Release notes and older APKs</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dl-app" id="app-client" role="tabpanel" aria-labelledby="tab-client" hidden>
+            <aside class="dl-side">
+              <span class="label">Build details</span>
+              <dl class="meta">
+                <div><dt>File</dt><dd>pocketnode-client.apk</dd></div>
+                <div><dt>Size</dt><dd>~21.4 MB</dd></div>
+                <div><dt>Architecture</dt><dd>Universal</dd></div>
+                <div><dt>Requires</dt><dd>Android 8.0+</dd></div>
+                <div><dt>Package</dt><dd>com.pocketnode.client</dd></div>
+              </dl>
+              <p class="dl-tested">One APK for Android TV, phones and tablets.</p>
+            </aside>
+            <div class="dl-main">
+              <div class="dl-title">
+                <span class="dl-icon"><svg class="ic"><use href="#i-play"/></svg></span>
+                <div>
+                  <h3>PocketNode Client</h3>
+                  <small>Android TV &amp; Mobile Player APK · for the device you watch on</small>
+                </div>
+              </div>
+              <div class="dl-row">
+                <span class="label">Current version</span>
+                <div>
+                  <a href="https://github.com/uju11/pocket_server/releases/latest/download/pocketnode-client.apk" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-magnetic>
+                    <svg class="ic"><use href="#i-download"/></svg> Download Client APK
+                  </a>
+                  <p>Latest beta build</p>
+                </div>
+              </div>
+              <div class="dl-row">
+                <span class="label">Other builds</span>
+                <div>
+                  <a href="https://github.com/uju11/pocket_server/releases" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+                    <svg class="ic"><use href="#i-code"/></svg> All releases on GitHub
+                  </a>
+                  <p>Release notes and older APKs</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="roadmap-item">
-          <span class="roadmap-status status-in-progress">IN DEVELOPMENT</span>
-          <h4>Cloudflare Tunnel Mesh</h4>
-          <p>Secure out-of-home streaming without exposing ports or requiring router UPnP changes.</p>
+
+        <div class="notice" data-reveal>
+          <div class="notice-icon"><svg class="ic"><use href="#i-flask"/></svg></div>
+          <div>
+            <strong>Notice: Both Apps Are Currently In The Beta Phase</strong>
+            <p>
+              PocketNode Core (Server) and PocketNode Client are in active development and testing. While all core services (Jellyfin, Jackett, BitTorrent, Telegram Bot) are fully operational, you may occasionally see visual enhancements, hot-fixes, or experimental features. If you spot any bugs or have feedback, please open an issue on <a href="https://github.com/uju11/pocket_server/issues" target="_blank" rel="noopener noreferrer">GitHub</a> or connect with <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer">Ujjwal on LinkedIn</a>!
+            </p>
+          </div>
         </div>
-        <div class="roadmap-item">
-          <span class="roadmap-status status-next">UP NEXT</span>
-          <h4>Hardware AV1 Transcoder</h4>
-          <p>Utilize Android MediaCodec hardware encoder for ultra-efficient mobile transcode pipelines.</p>
+      </div>
+    </section>
+
+    <!-- Tech marquee -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marquee">
+        <span>Jellyfin</span><span>Jackett Torznab</span><span>Libtorrent4j</span><span>DLNA Cast</span><span>Telegram Bot</span><span>mDNS Discovery</span><span>Android TV</span><span>Hardware Decoding</span>
+      </div>
+    </div>
+
+    <!-- Ecosystem -->
+    <section id="about">
+      <div class="wrap">
+        <div class="head" data-reveal>
+          <span class="eyebrow">// TWO DEDICATED APPS</span>
+          <h2>The Complete PocketNode Ecosystem</h2>
+          <p>A high-performance dual-app architecture tailored for zero friction.</p>
         </div>
-        <div class="roadmap-item">
-          <span class="roadmap-status status-next">PLANNED</span>
-          <h4>Auto Subtitle Fetcher</h4>
-          <p>Synchronized multilingual subtitle downloading via OpenSubtitles REST integration.</p>
+
+        <div class="grid-2">
+          <div class="card" data-reveal data-tilt>
+            <div>
+              <span class="chip">THE HOST DAEMON</span>
+              <h3>PocketNode Core (Server)</h3>
+              <p>Runs as a persistent foreground Android service on your server phone with lock-screen wake-locks.</p>
+              <ul class="features">
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Embedded Jellyfin Media Server with REST API</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Native Libtorrent4j C++ engine (DHT + Magnet)</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Jackett multi-indexer aggregator on port 9117</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Telegram Bot for remote one-click downloads</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Zero-config Wi-Fi mDNS broadcast</li>
+              </ul>
+            </div>
+            <a href="#downloads" class="btn btn-primary btn-block">Download Server APK <svg class="ic"><use href="#i-arrow"/></svg></a>
+          </div>
+
+          <div class="card" data-reveal data-tilt>
+            <div>
+              <span class="chip">THE CONTROLLER &amp; PLAYER</span>
+              <h3>PocketNode Client</h3>
+              <p>Install on your daily phone, tablet, or Android TV to discover and stream from your PocketNode daemon.</p>
+              <ul class="features">
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Instant mDNS zero-setup discovery on Wi-Fi</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Direct media stream with hardware decoding</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Remote transfer queue management &amp; stats</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Clean modern tactical HUD UI</li>
+                <li><span class="tick"><svg class="ic"><use href="#i-check"/></svg></span> Background push notifications for completed media</li>
+              </ul>
+            </div>
+            <a href="#downloads" class="btn btn-ghost btn-block">Download Client APK <svg class="ic"><use href="#i-arrow"/></svg></a>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="band" id="how-it-works">
+      <div class="wrap">
+        <div class="head" data-reveal>
+          <span class="eyebrow">// ZERO ROUTER TINKERING</span>
+          <h2>How To Set Up In 3 Minutes</h2>
+          <p>No port-forwarding, no Linux CLI knowledge, no dynamic DNS headaches required.</p>
+        </div>
+
+        <div class="steps" id="steps">
+          <div class="steps-line" aria-hidden="true"><i id="steps-fill"></i></div>
+          <div class="step" data-step>
+            <div class="step-num">01</div>
+            <h4>Install Server APK</h4>
+            <p>Install <strong>PocketNode Core</strong> on any spare Android phone connected to your Wi-Fi, grant storage permissions, and tap <strong>START DAEMON</strong>.</p>
+          </div>
+          <div class="step" data-step>
+            <div class="step-num">02</div>
+            <h4>Zero-Config Discovery</h4>
+            <p>Open <strong>PocketNode Client</strong> on your main device. It automatically detects <code>pocketnode.local</code> on the network with no manual IP entry needed.</p>
+          </div>
+          <div class="step" data-step>
+            <div class="step-num">03</div>
+            <h4>Stream &amp; Download</h4>
+            <p>Send magnet links directly from Telegram, search torrents via Jackett, or play high-bitrate video straight to your Smart TV or phone.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="band" id="roadmap">
+      <div class="wrap">
+        <div class="head" data-reveal>
+          <span class="eyebrow">// PRODUCT EVOLUTION</span>
+          <h2>Upcoming Features</h2>
+          <p>What we're actively coding for upcoming releases.</p>
+        </div>
+
+        <div class="road">
+          <div class="card" data-reveal>
+            <span class="state now"><span class="dot"></span>IN DEVELOPMENT</span>
+            <h4>LG webOS TV App</h4>
+            <p>Native client tailored for LG Smart TVs with Magic Remote navigation and direct Jellyfin 4K HDR playback.</p>
+          </div>
+          <div class="card" data-reveal>
+            <span class="state now"><span class="dot"></span>IN DEVELOPMENT</span>
+            <h4>Cloudflare Tunnel Mesh</h4>
+            <p>Secure out-of-home streaming without exposing ports or requiring router UPnP changes.</p>
+          </div>
+          <div class="card" data-reveal>
+            <span class="state later">UP NEXT</span>
+            <h4>Hardware AV1 Transcoder</h4>
+            <p>Utilize Android MediaCodec hardware encoder for ultra-efficient mobile transcode pipelines.</p>
+          </div>
+          <div class="card" data-reveal>
+            <span class="state later">PLANNED</span>
+            <h4>Auto Subtitle Fetcher</h4>
+            <p>Synchronized multilingual subtitle downloading via OpenSubtitles REST integration.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Closing CTA -->
+    <section class="cta-band">
+      <div class="wrap cta">
+        <h2>Put that spare phone to work.</h2>
+        <p>Install the server, open the client, and start streaming on your own Wi-Fi.</p>
+        <a href="#downloads" class="btn" data-magnetic><svg class="ic"><use href="#i-download"/></svg> Get PocketNode</a>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-content">
-        <div class="dev-profile">
-          <div class="dev-avatar">U</div>
+  <footer class="dark">
+    <div class="wrap">
+      <div class="foot">
+        <div class="dev">
+          <div class="avatar">U</div>
           <div>
-            <h4 style="font-weight: 800; font-size: 1rem;">Created by Ujjwal MV</h4>
-            <p style="color: var(--text-muted); font-size: 0.82rem;">Autonomous Systems & Android Developer</p>
+            <h4>Created by Ujjwal MV</h4>
+            <p>Autonomous Systems &amp; Android Developer</p>
           </div>
         </div>
-
-        <div class="social-links">
-          <a href="https://github.com/uju11/pocket_server" target="_blank" rel="noopener noreferrer" class="social-btn">
-            <span>🐙 GitHub</span>
-          </a>
-          <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer" class="social-btn">
-            <span>💼 LinkedIn</span>
-          </a>
-          <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer" class="social-btn" style="border-color: #F59E0B; color: #D97706;">
-            <span>☕ Buy Me a Coffee</span>
-          </a>
+        <div class="social">
+          <a href="https://github.com/uju11/pocket_server" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-code"/></svg> GitHub</a>
+          <a href="https://www.linkedin.com/in/ujjwal-mv" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-user"/></svg> LinkedIn</a>
+          <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm coffee"><svg class="ic"><use href="#i-cup"/></svg> Buy Me a Coffee</a>
         </div>
       </div>
-
-      <div class="footer-bottom">
+      <div class="foot-end">
         <p>PocketNode // Self-Hosted Home Server Engine • Open Beta 2026</p>
       </div>
     </div>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script>
-    // Tab Switcher on Preview Deck
-    const tabEndpoints = document.getElementById('tab-endpoints');
-    const tabSpecs = document.getElementById('tab-specs');
-    const previewContent = document.getElementById('preview-content');
+  (function () {
+    var $ = function (s, r) { return (r || document).querySelector(s); };
+    var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+    var hasGsap = typeof window.gsap !== 'undefined';
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var animate = hasGsap && !reduce;
 
-    const endpointsHTML = `
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>🎬 Jellyfin Media Server</span>
-          <span class="service-status">ACTIVE</span>
-        </div>
-        <div class="service-url">http://pocketnode.local:8096</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>🌐 Web Control Deck</span>
-          <span class="service-status">ACTIVE</span>
-        </div>
-        <div class="service-url">http://pocketnode.local:8080</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>🧲 Jackett Torznab</span>
-          <span class="service-status">ACTIVE</span>
-        </div>
-        <div class="service-url">http://pocketnode.local:9117</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>📺 VLC / DLNA Cast</span>
-          <span class="service-status">ACTIVE</span>
-        </div>
-        <div class="service-url">http://pocketnode.local:8090</div>
-      </div>
-    `;
+    /* ── Tab groups (work with or without GSAP) ── */
+    var inkers = [];
+    $$('[role="tablist"]').forEach(function (list) {
+      var tabs = $$('.tab', list), ink = $('.tab-ink', list);
+      var pad = parseFloat(getComputedStyle(ink).left) || 0;
+      function place(tab, instant) {
+        var x = tab.offsetLeft - pad, w = tab.offsetWidth;
+        if (animate && !instant) gsap.to(ink, { x: x, width: w, duration: 0.45, ease: 'power3.out' });
+        else if (hasGsap) gsap.set(ink, { x: x, width: w });
+        else { ink.style.transform = 'translateX(' + x + 'px)'; ink.style.width = w + 'px'; }
+      }
+      function select(tab) {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+          $('#' + t.getAttribute('aria-controls')).hidden = !on;
+        });
+        place(tab);
+        if (animate) {
+          var panel = $('#' + tab.getAttribute('aria-controls'));
+          gsap.fromTo($$('.svc, .dl-title, .dl-row, .meta div', panel),
+            { y: 14, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: 'power3.out', overwrite: true });
+        }
+      }
+      tabs.forEach(function (t) { t.addEventListener('click', function () { select(t); }); });
+      inkers.push(function () { place($('.tab[aria-selected="true"]', list), true); });
+    });
+    function initInk() { inkers.forEach(function (f) { f(); }); }
+    initInk();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(initInk);
+    window.addEventListener('resize', initInk);
 
-    const specsHTML = `
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>⚡ CPU & Thermal Sensor</span>
-          <span class="service-status" style="color:#0284C7; background:rgba(2,132,199,0.1);">37°C CELL</span>
-        </div>
-        <div class="service-url">Octa-Core ARM64 • Governor: Schedutil</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>💾 Storage Array</span>
-          <span class="service-status" style="color:#0284C7; background:rgba(2,132,199,0.1);">128 GB UFS</span>
-        </div>
-        <div class="service-url">Mount: /storage/emulated/0/PocketNode</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>📡 Network Binding</span>
-          <span class="service-status">ZERO-CONFIG</span>
-        </div>
-        <div class="service-url">mDNS: pocketnode.local (Wi-Fi 5GHz)</div>
-      </div>
-      <div class="service-box">
-        <div class="service-box-title">
-          <span>🔋 Battery & Power</span>
-          <span class="service-status">CHARGING</span>
-        </div>
-        <div class="service-url">Continuous AC Dock • Lock-free daemon</div>
-      </div>
-    `;
+    /* ── Spotlight follows the cursor on cards ── */
+    if (finePointer) {
+      $$('.card').forEach(function (card) {
+        card.addEventListener('pointermove', function (e) {
+          var r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+          card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+        });
+      });
+    }
 
-    tabEndpoints.addEventListener('click', () => {
-      tabEndpoints.classList.add('active');
-      tabSpecs.classList.remove('active');
-      previewContent.innerHTML = endpointsHTML;
+    if (!animate) return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* ── Headline: split into words for a masked rise ── */
+    var h1 = $('#headline');
+    (function split(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          child.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            var w = document.createElement('span'); w.className = 'w'; w.setAttribute('aria-hidden', 'true');
+            var wi = document.createElement('span'); wi.className = 'wi' + (node !== h1 ? ' accent' : '');
+            wi.textContent = part; w.appendChild(wi); frag.appendChild(w);
+          });
+          node.replaceChild(frag, child);
+        } else if (child.nodeType === 1) {
+          child.classList.remove('accent');
+          split(child);
+        }
+      });
+    })(h1);
+
+    /* ── Hero intro ── */
+    var intro = gsap.timeline({ defaults: { ease: 'power4.out' } });
+    intro
+      .from('#nav', { y: -30, opacity: 0, duration: 0.8 })
+      .from('.hero .pill', { y: 20, opacity: 0, duration: 0.7 }, '-=0.5')
+      .from('#headline .wi', { yPercent: 115, duration: 1, stagger: 0.055 }, '-=0.45')
+      .from('[data-hero]:not(.pill)', { y: 24, opacity: 0, duration: 0.8, stagger: 0.1 }, '-=0.65')
+      .from('#console', { y: 70, opacity: 0, rotationX: 22, scale: 0.94, duration: 1.3 }, '-=0.6')
+      .from('#panel-endpoints .svc', { y: 20, opacity: 0, duration: 0.6, stagger: 0.07 }, '-=0.8');
+
+    /* ── Ambient orbs drift ── */
+    $$('.orb').forEach(function (orb, i) {
+      gsap.to(orb, {
+        x: 'random(-70, 70)', y: 'random(-50, 50)', scale: 'random(0.9, 1.2)',
+        duration: 7 + i * 2, ease: 'sine.inOut', repeat: -1, yoyo: true, repeatRefresh: true
+      });
+    });
+    gsap.to('.hero-bg', { yPercent: 18, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+
+    /* ── Console floats, drifts on scroll, and leans toward the cursor ── */
+    intro.eventCallback('onComplete', function () {
+      gsap.to('#console', { y: -12, duration: 3.2, ease: 'sine.inOut', repeat: -1, yoyo: true });
+    });
+    gsap.to('.stage', { y: -50, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.6 } });
+    if (finePointer) {
+      var lx = gsap.quickTo('.stage', 'rotationY', { duration: 0.9, ease: 'power3.out' });
+      var ly = gsap.quickTo('.stage', 'rotationX', { duration: 0.9, ease: 'power3.out' });
+      gsap.set('.stage', { transformPerspective: 1400 });
+      $('.hero').addEventListener('pointermove', function (e) {
+        lx((e.clientX / window.innerWidth - 0.5) * 10);
+        ly((e.clientY / window.innerHeight - 0.5) * -8);
+      });
+      $('.hero').addEventListener('pointerleave', function () { lx(0); ly(0); });
+    }
+
+    /* ── Scroll progress + nav state ── */
+    gsap.to('#progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
+    ScrollTrigger.create({ start: 40, end: 'max', toggleClass: { targets: '.nav-shell', className: 'scrolled' } });
+
+    /* ── Marquee ── */
+    var track = $('#marquee');
+    track.innerHTML += track.innerHTML;
+    var loop = gsap.to(track, { xPercent: -50, duration: 32, ease: 'none', repeat: -1 });
+    ScrollTrigger.create({
+      onUpdate: function (self) {
+        var v = gsap.utils.clamp(-4, 4, self.getVelocity() / 400);
+        gsap.to(loop, {
+          timeScale: 1 + Math.abs(v), duration: 0.3, overwrite: true,
+          onComplete: function () { gsap.to(loop, { timeScale: 1, duration: 1.2 }); }
+        });
+      }
     });
 
-    tabSpecs.addEventListener('click', () => {
-      tabSpecs.classList.add('active');
-      tabEndpoints.classList.remove('active');
-      previewContent.innerHTML = specsHTML;
+    /* ── Reveal on scroll ── */
+    gsap.set('[data-reveal]', { y: 44, opacity: 0 });
+    ScrollTrigger.batch('[data-reveal]', {
+      start: 'top 88%', once: true,
+      onEnter: function (els) {
+        gsap.to(els, { y: 0, opacity: 1, duration: 0.9, stagger: 0.1, ease: 'power3.out', clearProps: 'transform' });
+      }
     });
+    $$('.features').forEach(function (list) {
+      gsap.from($$('li', list), {
+        x: -16, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out',
+        scrollTrigger: { trigger: list, start: 'top 85%', once: true }
+      });
+    });
+
+    /* ── Steps: line draws, cards pop in sequence ── */
+    gsap.from('#steps-fill', { scaleX: 0, ease: 'none', scrollTrigger: { trigger: '#steps', start: 'top 75%', end: 'top 30%', scrub: 0.5 } });
+    gsap.from('[data-step]', {
+      y: 50, opacity: 0, duration: 0.8, stagger: 0.18, ease: 'back.out(1.5)',
+      scrollTrigger: { trigger: '#steps', start: 'top 80%', once: true }
+    });
+    gsap.from('.step-num', {
+      scale: 0, rotation: -90, duration: 0.7, stagger: 0.18, ease: 'back.out(2)', delay: 0.15,
+      scrollTrigger: { trigger: '#steps', start: 'top 80%', once: true }
+    });
+
+    /* ── CTA: slow zoom ── */
+    gsap.from('.cta > *', { y: 26, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out', scrollTrigger: { trigger: '.cta', start: 'top 80%', once: true } });
+
+    /* ── Safety net: if frames never start (page rendered off-screen), show everything ── */
+    setTimeout(function () {
+      if (gsap.ticker.frame > 1) return;
+      ScrollTrigger.getAll().forEach(function (st) { st.kill(); });
+      intro.progress(1);
+      gsap.killTweensOf('[data-reveal], [data-step], .step-num, .features li, .cta > *, #steps-fill');
+      gsap.set('[data-reveal], [data-step], .step-num, .features li, .cta > *, #steps-fill', { clearProps: 'all' });
+    }, 2500);
+
+    if (!finePointer) return;
+
+    /* ── Magnetic buttons ── */
+    $$('[data-magnetic]').forEach(function (btn) {
+      var xTo = gsap.quickTo(btn, 'x', { duration: 0.5, ease: 'power3.out' });
+      var yTo = gsap.quickTo(btn, 'y', { duration: 0.5, ease: 'power3.out' });
+      btn.addEventListener('pointermove', function (e) {
+        var r = btn.getBoundingClientRect();
+        xTo((e.clientX - (r.left + r.width / 2)) * 0.28);
+        yTo((e.clientY - (r.top + r.height / 2)) * 0.38);
+      });
+      btn.addEventListener('pointerleave', function () { xTo(0); yTo(0); });
+    });
+
+    /* ── 3D tilt on feature cards ── */
+    $$('[data-tilt]').forEach(function (card) {
+      var rx = gsap.quickTo(card, 'rotationX', { duration: 0.6, ease: 'power3.out' });
+      var ry = gsap.quickTo(card, 'rotationY', { duration: 0.6, ease: 'power3.out' });
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        ry(((e.clientX - r.left) / r.width - 0.5) * 7);
+        rx(((e.clientY - r.top) / r.height - 0.5) * -7);
+      });
+      card.addEventListener('pointerleave', function () { rx(0); ry(0); });
+    });
+  })();
   </script>
 </body>
 </html>
