@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M6 → M7
+Phase: M7 → M8
 IN PROGRESS: none
-Last done: M7.3 (GET /api/health/metrics: battery, thermal, storage, ram, uptime)
-Next: M7.4
+Last done: M7.4 (Drive file management: DELETE/rename/mkdir on /api/drive/ backed by StorageManager)
+Next: M8
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

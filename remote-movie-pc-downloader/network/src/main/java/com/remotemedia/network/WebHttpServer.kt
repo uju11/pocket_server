@@ -620,6 +620,39 @@ object WebHttpServer {
                         call.respondBytes(bytes, ContentType.Image.JPEG)
                     }
 
+                    // ── Drive File Management (M7.4) ──────────────────────────
+                    post("/api/drive/file/delete") {
+                        val path = call.request.queryParameters["path"] ?: ""
+                        val file = com.remotemedia.storage.StorageManager.resolveRelativePath(path)
+                            ?: return@post call.respond(HttpStatusCode.NotFound)
+                        val ok = file.deleteRecursively()
+                        call.respondText(gson.toJson(mapOf("ok" to ok)), ContentType.Application.Json)
+                    }
+
+                    post("/api/drive/rename") {
+                        val path = call.request.queryParameters["path"] ?: ""
+                        val newName = call.request.queryParameters["new_name"] ?: ""
+                        val file = com.remotemedia.storage.StorageManager.resolveRelativePath(path)
+                            ?: return@post call.respond(HttpStatusCode.NotFound)
+                        if (newName.isBlank() || newName.contains("..") || newName.contains("/")) {
+                            return@post call.respond(HttpStatusCode.BadRequest)
+                        }
+                        val target = java.io.File(file.parentFile, newName)
+                        val ok = file.renameTo(target)
+                        call.respondText(gson.toJson(mapOf("ok" to ok, "new_path" to target.name)), ContentType.Application.Json)
+                    }
+
+                    post("/api/drive/mkdir") {
+                        val path = call.request.queryParameters["path"] ?: ""
+                        if (path.isBlank() || path.contains("..")) {
+                            return@post call.respond(HttpStatusCode.BadRequest)
+                        }
+                        val base = com.remotemedia.storage.StorageManager.getBaseDir()
+                        val dir = java.io.File(base, path)
+                        val ok = dir.mkdirs() || dir.exists()
+                        call.respondText(gson.toJson(mapOf("ok" to ok, "path" to path)), ContentType.Application.Json)
+                    }
+
                     // ── WebDAV (M2.4) ─────────────────────────────────────────
                     route("/webdav/{...}") {
                         // PROPFIND → XML directory/file listing
