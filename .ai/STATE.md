@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M4 → M5
+Phase: M5 → M6
 IN PROGRESS: none
-Last done: M5.3 (ArchiveOrgSource.kt in :sources: archive.org search & direct MP4 stream/download URLs)
-Next: M5.4
+Last done: M5.4 (TmdbClient.kt in :sources: title/year resolution with TMDB API and local fallback)
+Next: M6
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
