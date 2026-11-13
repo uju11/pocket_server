@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M7 → M8
+Phase: Complete (v1.0.0)
 IN PROGRESS: none
-Last done: M8.3 (.github/workflows/ci.yml: GitHub Actions CI build & test workflow)
-Next: M8.4
+Last done: M8.4 (RELEASE_NOTES.md: comprehensive v1.0.0 changelog & release guide)
+Next: None (all milestones complete)
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

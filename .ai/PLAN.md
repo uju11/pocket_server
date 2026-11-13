@@ -59,5 +59,5 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M8.1 | Security audit & notes — docs/SECURITY.md: document auth model, private by default, tokens, network safety | security guide written
 [x] M8.2 | Final ARCH.md documentation update — .ai/ARCH.md: update endpoint map and module architecture | reflects all implemented endpoints
 [x] M8.3 | CI workflow — .github/workflows/ci.yml: GitHub Actions build and test verification | valid workflow YAML
-[ ] M8.4 | Tagged v1.0.0 release notes — RELEASE_NOTES.md: comprehensive changelog and release notes | release notes document written
+[x] M8.4 | Tagged v1.0.0 release notes — RELEASE_NOTES.md: comprehensive changelog and release notes | release notes document written
 
