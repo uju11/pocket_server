@@ -45,7 +45,11 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 [x] M5.2 | Torznab source in :sources — TorznabClient.kt: parse Torznab XML/RSS search feed into unified media items | parses item title, magnet link, size, seeders
 [x] M5.3 | Internet Archive source in :sources — ArchiveOrgSource.kt: query archive.org metadata API for public domain videos | returns direct MP4 stream/download URLs
 [x] M5.4 | TMDB metadata resolver in :sources — TmdbClient.kt: lookup poster, backdrop, overview by title/year | returns metadata without requiring API key if missing
-M6 Watch party (host-authoritative WebSocket) + web PWA with guest links
+## M6 Watch party (host-authoritative WebSocket) + web PWA with guest links
+[x] M6.1 | Watch party WebSocket hub in :network — WatchPartyHub.kt: host-authoritative play/pause/seek, clock-sync ping/pong | state broadcast to all connected clients
+[ ] M6.2 | /ws/party route in :network — WebHttpServer.kt: Ktor WebSocket endpoint for party room join/sync | bidirectional JSON messages
+[ ] M6.3 | Guest party link API — POST /api/party/invite (party_id, ttl_ms) → token + shareable URL | public guest join without user account
+[ ] M6.4 | Web PWA watch party player — minimal HTML5/JS player page at /party/{token} | connects to /ws/party and syncs playback
 M7 Drive app, hub federation, health dashboard
 M8 Docs, demo video, CI, security notes, tagged release
 
