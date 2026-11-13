@@ -182,7 +182,8 @@ fun WatchTabScreen(
                 isSearching = isSearching,
                 onSelectResult = { selectedResultForAction = it },
                 onStreamDirect = { res ->
-                    onPlayMovie(res.title, res.streamUrl, "${res.source} • ${res.quality}")
+                    val badge = if (res.isLocal || res.source == "SANDBOX" || res.source == "HOST") "DIRECT PLAY • LOSSLESS" else "${res.source} • ${res.quality}"
+                    onPlayMovie(res.title, res.streamUrl, badge)
                 },
                 onDownloadToServer = { res ->
                     if (res.source == "TORRENT") {
@@ -1001,7 +1002,8 @@ fun WatchTabScreen(
                 onDismiss = { selectedResultForAction = null },
                 onStream = {
                     selectedResultForAction = null
-                    onPlayMovie(result.title, result.streamUrl, "${result.source} • ${result.quality}")
+                    val badge = if (result.isLocal || result.source == "SANDBOX" || result.source == "HOST") "DIRECT PLAY • LOSSLESS" else "${result.source} • ${result.quality}"
+                    onPlayMovie(result.title, result.streamUrl, badge)
                 },
                 onSaveToServer = {
                     selectedResultForAction = null
@@ -1820,11 +1822,12 @@ private fun UnifiedSearchCard(
     onDownload: () -> Unit
 ) {
     val context = LocalContext.current
+    val isDirectPlay = item.isLocal || item.source == "SANDBOX" || item.source == "HOST"
     val accentColor = when (item.source) {
         "TORRENT" -> AmberOrange
         "TELEGRAM" -> NeonCyan
-        "SANDBOX" -> StatusGreen
-        else -> NeonPurpleLight
+        "SANDBOX", "HOST" -> StatusGreen
+        else -> if (item.isLocal) StatusGreen else NeonPurpleLight
     }
 
     Box(
@@ -1863,6 +1866,7 @@ private fun UnifiedSearchCard(
                         val icon = when (item.source) {
                             "TORRENT" -> Icons.Filled.CloudDownload
                             "TELEGRAM" -> Icons.Filled.Send
+                            "HOST" -> Icons.Filled.Smartphone
                             else -> Icons.Filled.Folder
                         }
                         Icon(icon, null, tint = accentColor.copy(alpha = 0.6f), modifier = Modifier.size(24.dp))
@@ -1879,7 +1883,7 @@ private fun UnifiedSearchCard(
                         .padding(horizontal = 4.dp, vertical = 1.dp)
                 ) {
                     Text(
-                        item.source.take(4),
+                        if (item.source == "HOST") "HOST" else if (item.isLocal || item.source == "SANDBOX") "LOCAL" else item.source.take(4),
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
@@ -1940,19 +1944,26 @@ private fun UnifiedSearchCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // STREAM Button
+                    // DIRECT PLAY / STREAM Button
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(
-                                Brush.horizontalGradient(listOf(Color(0xFF0284C7), Color(0xFF7C3AED)))
+                                if (isDirectPlay) Brush.horizontalGradient(listOf(Color(0xFF059669), Color(0xFF10B981)))
+                                else Brush.horizontalGradient(listOf(Color(0xFF0284C7), Color(0xFF7C3AED)))
                             )
                             .clickable { onStream() }
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Icon(Icons.Filled.PlayArrow, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                            Text("STREAM", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Monospace)
+                            Text(
+                                if (isDirectPlay) "DIRECT PLAY" else "STREAM",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontFamily = FontFamily.Monospace
+                            )
                         }
                     }
 
@@ -1961,12 +1972,12 @@ private fun UnifiedSearchCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(
-                                if (item.isLocal) StatusGreen.copy(alpha = 0.15f)
+                                if (isDirectPlay) StatusGreen.copy(alpha = 0.15f)
                                 else accentColor.copy(alpha = 0.15f)
                             )
                             .border(
                                 1.dp,
-                                if (item.isLocal) StatusGreen.copy(alpha = 0.4f)
+                                if (isDirectPlay) StatusGreen.copy(alpha = 0.4f)
                                 else accentColor.copy(alpha = 0.4f),
                                 RoundedCornerShape(6.dp)
                             )
@@ -1975,16 +1986,16 @@ private fun UnifiedSearchCard(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Icon(
-                                if (item.isLocal) Icons.Filled.Check else Icons.Filled.Download,
+                                if (isDirectPlay) Icons.Filled.Check else Icons.Filled.Download,
                                 null,
-                                tint = if (item.isLocal) StatusGreen else accentColor,
+                                tint = if (isDirectPlay) StatusGreen else accentColor,
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                if (item.isLocal) "ON SERVER" else "SAVE TO SERVER",
+                                if (item.isLocal) "ON SERVER" else if (isDirectPlay) "ON PHONE" else "SAVE TO SERVER",
                                 fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (item.isLocal) StatusGreen else accentColor,
+                                color = if (isDirectPlay) StatusGreen else accentColor,
                                 fontFamily = FontFamily.Monospace
                             )
                         }
@@ -2102,10 +2113,13 @@ private fun UnifiedResultActionModal(
             }
 
             // Description / mode explanation
-            val explanation = when (result.source) {
-                "TORRENT" -> "Sequential Stremio-style swarm streaming. Tapping Save to Server downloads the full video directly into your home movies vault in the background without needing any external client."
-                "TELEGRAM" -> "Direct on-the-fly CDN proxy streaming without disk writes. Tapping Save to Server downloads the complete original file to your home server disk independently."
-                else -> "Stored locally in your PocketNode Sandbox. Instant direct playback from disk."
+            val isDirectPlay = result.isLocal || result.source == "SANDBOX" || result.source == "HOST"
+            val explanation = when {
+                result.source == "HOST" -> "Stored directly on your Host Phone storage. Zero-copy lossless bitstream playback."
+                result.isLocal || result.source == "SANDBOX" -> "Stored locally in your PocketNode Sandbox. Instant direct lossless playback from disk."
+                result.source == "TORRENT" -> "Sequential Stremio-style swarm streaming. Tapping Save to Server downloads the full video directly into your home movies vault in the background without needing any external client."
+                result.source == "TELEGRAM" -> "Direct on-the-fly CDN proxy streaming without disk writes. Tapping Save to Server downloads the complete original file to your home server disk independently."
+                else -> "Stored locally in your home server vault. Instant direct lossless playback."
             }
             Text(
                 text = explanation,
@@ -2116,7 +2130,7 @@ private fun UnifiedResultActionModal(
 
             // Primary & Secondary Actions
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // STREAM DIRECT (PRIMARY)
+                // DIRECT PLAY / STREAM (PRIMARY)
                 Button(
                     onClick = onStream,
                     modifier = Modifier
@@ -2130,16 +2144,15 @@ private fun UnifiedResultActionModal(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                Brush.horizontalGradient(
-                                    listOf(Color(0xFF0284C7), Color(0xFF7C3AED))
-                                )
+                                if (isDirectPlay) Brush.horizontalGradient(listOf(Color(0xFF059669), Color(0xFF10B981)))
+                                else Brush.horizontalGradient(listOf(Color(0xFF0284C7), Color(0xFF7C3AED)))
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Filled.PlayArrow, null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Text(
-                                "STREAM DIRECT (NO WAIT)",
+                                if (isDirectPlay) "DIRECT PLAY (LOSSLESS)" else "STREAM DIRECT (NO WAIT)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -2155,21 +2168,21 @@ private fun UnifiedResultActionModal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(46.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, if (result.isLocal) StatusGreen else accentColor),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDirectPlay) StatusGreen else accentColor),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(
-                            if (result.isLocal) Icons.Filled.Check else Icons.Filled.Download,
+                            if (isDirectPlay) Icons.Filled.Check else Icons.Filled.Download,
                             null,
-                            tint = if (result.isLocal) StatusGreen else accentColor,
+                            tint = if (isDirectPlay) StatusGreen else accentColor,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            if (result.isLocal) "ALREADY IN SANDBOX (LOCAL)" else "SAVE TO HOME SERVER (INDEPENDENT)",
+                            if (result.isLocal) "ALREADY IN SANDBOX (LOCAL)" else if (isDirectPlay) "STORED ON HOST PHONE" else "SAVE TO HOME SERVER (INDEPENDENT)",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (result.isLocal) StatusGreen else accentColor,
+                            color = if (isDirectPlay) StatusGreen else accentColor,
                             fontFamily = FontFamily.Monospace
                         )
                     }

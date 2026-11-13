@@ -49,6 +49,17 @@ object LocalMediaScanner {
             }
         }
 
+        // 3b. If it is an HTTP stream URL, extract the video filename/title from path
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            val pathName = runCatching {
+                java.net.URLDecoder.decode(trimmed.substringBefore("?").substringAfterLast("/"), "UTF-8")
+            }.getOrNull()
+            if (!pathName.isNullOrBlank() && pathName.contains(".")) {
+                val candidate = findMatchingFileInStorage(context, pathName)
+                if (candidate != null) return Uri.fromFile(candidate)
+            }
+        }
+
         // 4. Search local directories for matching video by title keyword
         val candidate = findMatchingFileInStorage(context, trimmed)
         if (candidate != null) {
@@ -237,6 +248,8 @@ object LocalMediaScanner {
             list.add(File(extRoot, "Download"))
             // Sibling Daemon App data folder if accessible
             list.add(File(extRoot, "Android/data/com.remotemedia/files/movies"))
+            list.add(File(extRoot, "Android/data/com.remotemedia/files/downloads"))
+            list.add(File(extRoot, "Android/data/com.remotemedia/files/sandbox"))
         }
 
         return list

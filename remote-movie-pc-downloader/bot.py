@@ -1322,11 +1322,16 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                 writer.close()
                 return
             req_line = line.decode('utf-8', errors='ignore').strip()
-            # Read and discard remaining headers
+            # Read and retain all request headers (do NOT discard — Range is needed for seeking)
+            req_headers = {}
             while True:
                 h = await reader.readline()
                 if not h or h == b'\r\n' or h == b'\n':
                     break
+                hstr = h.decode('utf-8', errors='ignore').strip()
+                if ':' in hstr:
+                    hkey, hval = hstr.split(':', 1)
+                    req_headers[hkey.strip().lower()] = hval.strip()
 
             parts = req_line.split()
             if len(parts) >= 2:
@@ -1450,8 +1455,14 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                     catalog = []
                     VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".ts", ".m4v", ".webm"}
                     seen_names = set()
-                    for search_dir in {DOWNLOAD_DIR, DIRECT_DOWNLOAD_DIR}:
-                        if not os.path.isdir(search_dir):
+                    # (dir, source_label, stream_path) — MOVIES_DIR is the sandbox folder
+                    catalog_dirs = [
+                        (DOWNLOAD_DIR,       "Telegram", "/stream/telegram"),
+                        (DIRECT_DOWNLOAD_DIR, "Telegram", "/stream/telegram"),
+                        (MOVIES_DIR,          "SANDBOX",  "/stream/sandbox"),
+                    ]
+                    for search_dir, src_label, stream_path in catalog_dirs:
+                        if not search_dir or not os.path.isdir(search_dir):
                             continue
                         for fname in os.listdir(search_dir):
                             fpath = os.path.join(search_dir, fname)
@@ -1481,7 +1492,8 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                                 "fileSize": fsize,
                                 "sizeFormatted": format_size(fsize),
                                 "mimeType": mime,
-                                "streamUrl": f"/stream/telegram?file_id={urllib.parse.quote(fid)}"
+                                "source": src_label,
+                                "streamUrl": f"{stream_path}?file_id={urllib.parse.quote(fid)}"
                             })
                     catalog.sort(key=lambda x: x["fileSize"], reverse=True)
                     body = _json.dumps(catalog, ensure_ascii=False)
@@ -1495,14 +1507,17 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                     writer.write(resp.encode('utf-8'))
                     await writer.drain()
 
-                elif parsed.path == "/stream/telegram" or parsed.path == "/stream/torrent":
+                elif parsed.path == "/stream/telegram" or parsed.path == "/stream/torrent" or parsed.path == "/stream/sandbox":
                     # ── Byte-range streaming proxy for a local video file ────────
                     import mimetypes as _mt, base64 as _b64
                     is_telegram = (parsed.path == "/stream/telegram")
+                    is_sandbox  = (parsed.path == "/stream/sandbox")
                     fpath = ""
                     VIDEO_EXTS2 = {".mp4", ".mkv", ".avi", ".mov", ".ts", ".m4v", ".webm"}
+                    # All directories where video files may live (including MOVIES_DIR sandbox)
+                    ALL_SEARCH_DIRS = list(dict.fromkeys(filter(None, [DOWNLOAD_DIR, DIRECT_DOWNLOAD_DIR, MOVIES_DIR])))
 
-                    if is_telegram:
+                    if is_telegram or is_sandbox:
                         fid = qs.get("file_id", [""])[0].strip()
                         if fid:
                             try:
@@ -1514,7 +1529,7 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                                 pass
                         if not fpath:
                             title_hint = qs.get("title", [""])[0].lower().replace("%20", " ").replace("+", " ")
-                            for sd in {DOWNLOAD_DIR, DIRECT_DOWNLOAD_DIR}:
+                            for sd in ALL_SEARCH_DIRS:
                                 if not os.path.isdir(sd):
                                     continue
                                 for fn in os.listdir(sd):
@@ -1527,7 +1542,7 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                     else:
                         title_hint = qs.get("title", [""])[0].lower().replace("%20", " ").replace("+", " ")
                         words = [w for w in title_hint.split() if len(w) > 3][:3]
-                        for sd in {DOWNLOAD_DIR, DIRECT_DOWNLOAD_DIR}:
+                        for sd in ALL_SEARCH_DIRS:
                             if not os.path.isdir(sd):
                                 continue
                             for fn in os.listdir(sd):
@@ -1546,15 +1561,8 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                         await writer.drain()
                         logging.warning(f"[Stream] Not found: path={parsed.path} qs={dict(qs)}")
                     else:
-                        # Read remaining headers to find Range
-                        range_header = None
-                        while True:
-                            hl = await reader.readline()
-                            if not hl or hl in (b'\r\n', b'\n'):
-                                break
-                            hstr = hl.decode('utf-8', errors='ignore').strip()
-                            if hstr.lower().startswith("range:"):
-                                range_header = hstr.split(":", 1)[1].strip()
+                        # Range header was already parsed from the outer header loop — use it directly
+                        range_header = req_headers.get("range", None)
                         file_size = os.path.getsize(fpath)
                         mime, _ = _mt.guess_type(fpath)
                         mime = mime or "video/mp4"
@@ -1627,6 +1635,94 @@ async def start_lan_http_bridge(client=None, port: int = 8765):
                     except Exception as te2:
                         logging.error(f"[LAN Bridge] /api/trending error: {te2}")
                     body = _json.dumps(out, ensure_ascii=False)
+                    resp = (
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: application/json; charset=utf-8\r\n"
+                        f"Content-Length: {len(body.encode('utf-8'))}\r\n"
+                        "Access-Control-Allow-Origin: *\r\n"
+                        "\r\n" + body
+                    )
+                    writer.write(resp.encode('utf-8'))
+                elif parsed.path == "/api/search":
+                    # ── Unified Search across Sandbox, Local Downloads, and Torrents ──
+                    import json as _json, base64 as _b64
+                    search_q = qs.get("q", [""])[0].strip()
+                    results = []
+                    VIDEO_EXTS_SEARCH = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".ts", ".m4v", ".webm"}
+                    seen_search_names = set()
+
+                    # 1. Local Sandbox (MOVIES_DIR) & Telegram downloads
+                    catalog_dirs = [
+                        (MOVIES_DIR,          "SANDBOX",  "/stream/sandbox"),
+                        (DOWNLOAD_DIR,        "TELEGRAM", "/stream/telegram"),
+                        (DIRECT_DOWNLOAD_DIR, "TELEGRAM", "/stream/telegram"),
+                    ]
+                    for s_dir, src_label, stream_p in catalog_dirs:
+                        if not s_dir or not os.path.isdir(s_dir):
+                            continue
+                        for fname in os.listdir(s_dir):
+                            fpath = os.path.join(s_dir, fname)
+                            if not os.path.isfile(fpath):
+                                continue
+                            _, ext = os.path.splitext(fname.lower())
+                            if ext not in VIDEO_EXTS_SEARCH or fname in seen_search_names:
+                                continue
+                            if search_q and search_q.lower() not in fname.lower():
+                                continue
+                            seen_search_names.add(fname)
+                            fsize = os.path.getsize(fpath)
+                            clean = re.sub(r'[\._\-\[\]\(\)]+', ' ', fname)
+                            clean = re.sub(r'\b(19|20)\d{2}\b.*', '', clean).strip()
+                            clean = re.sub(r'\s+', ' ', clean).strip()
+                            ym = re.search(r'\b(19\d{2}|20\d{2})\b', fname)
+                            qm = re.search(r'\b(2160p|1080p|720p|480p|BluRay|WEB-DL|HDRip|REMUX|4K)\b', fname, re.I)
+                            fid = _b64.urlsafe_b64encode(fpath.encode()).decode().rstrip("=")
+                            results.append({
+                                "id": f"local_{fid[:32]}",
+                                "title": clean[:80].strip(),
+                                "source": src_label,
+                                "size": format_size(fsize),
+                                "quality": qm.group(0) if qm else "1080p",
+                                "year": ym.group(0) if ym else "",
+                                "posterUrl": "",
+                                "streamUrl": f"{stream_p}?file_id={urllib.parse.quote(fid)}",
+                                "fileId": fid,
+                                "isLocal": True,
+                                "seeds": 0,
+                                "magnetUri": ""
+                            })
+
+                    # 2. Torrents (Jackett)
+                    if search_q:
+                        try:
+                            raw_t = await search_jackett(search_q)
+                            raw_t.sort(key=lambda x: x.get("Seeders", 0), reverse=True)
+                            for i, r in enumerate(raw_t[:15]):
+                                t_title = r.get("Title", "Unknown")
+                                t_link = r.get("MagnetUri") or r.get("Link") or ""
+                                if not t_link or t_title in seen_search_names:
+                                    continue
+                                seen_search_names.add(t_title)
+                                ym = re.search(r'\b(19\d{2}|20\d{2})\b', t_title)
+                                qm = re.search(r'\b(2160p|1080p|720p|4K UHD|REMUX|BluRay|WEB-DL)\b', t_title, re.I)
+                                results.append({
+                                    "id": f"tor_{i}",
+                                    "title": t_title[:80],
+                                    "source": "TORRENT",
+                                    "size": format_size(r.get("Size", 0)),
+                                    "quality": qm.group(0) if qm else "1080p",
+                                    "year": ym.group(0) if ym else "",
+                                    "posterUrl": "",
+                                    "streamUrl": f"/stream/torrent?title={urllib.parse.quote(t_title[:60])}&magnet={urllib.parse.quote(t_link)}",
+                                    "fileId": "",
+                                    "isLocal": False,
+                                    "seeds": r.get("Seeders", 0),
+                                    "magnetUri": t_link
+                                })
+                        except Exception as j_err:
+                            logging.error(f"[LAN Bridge] /api/search jackett error: {j_err}")
+
+                    body = _json.dumps({"ok": True, "query": search_q, "results": results}, ensure_ascii=False)
                     resp = (
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: application/json; charset=utf-8\r\n"

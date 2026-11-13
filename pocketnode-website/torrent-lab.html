@@ -494,7 +494,7 @@
             '<div class="torrent-badges">' +
               '<span class="badge badge-quality">' + t.quality + '</span>' +
               '<span class="badge badge-size">' + t.size + '</span>' +
-              '<span class="badge badge-seeds">&#128994; ' + t.seeds.toLocaleString() + ' seeds</span>' +
+              '<span class="badge badge-seeds" id="seed-badge-' + t.id + '" title="Full swarm size via UDP trackers. Browser WebTorrent can only connect to WebSocket peers (wss://) — a small subset of the real swarm.">&#128994; ~' + t.seeds.toLocaleString() + ' full swarm</span>' +
             '</div>' +
             '<div class="card-actions">' +
               '<button class="btn-stream-card" onclick="startStream(\'' + t.magnet.replace(/'/g, "\\'") + '\',\'' + t.title.replace(/'/g, "\\'") + '\',\'' + t.id + '\')">&#9654; Stream Now</button>' +
@@ -629,6 +629,17 @@
         currentTorrent = torrent;
         log('Swarm joined! InfoHash: ' + torrent.infoHash, 'succ');
         log('Found ' + torrent.files.length + ' file(s) in torrent.');
+        log('Browser WebSocket peers visible: ' + torrent.numPeers + ' (UDP seeders not reachable from browser)', 'warn');
+        // Update sidebar badge of the active card with the live browser peer count
+        if (cardId) {
+          var liveBadge = document.getElementById('seed-badge-' + cardId);
+          if (liveBadge) {
+            liveBadge.textContent = '\uD83D\uDFE0 ' + torrent.numPeers + ' live (WS) / ~' + t.seeds.toLocaleString() + ' full swarm';
+            liveBadge.style.background = 'rgba(255,150,0,0.15)';
+            liveBadge.style.color = 'var(--status-yellow)';
+            liveBadge.style.border = '1px solid rgba(255,150,0,0.3)';
+          }
+        }
 
         // Pick browser-native video — exclude .mkv (browsers cannot decode Matroska natively)
         var NATIVE = ['.mp4', '.webm', '.ogg', '.ogv', '.mov'];
@@ -683,7 +694,15 @@
           }
           statDownload.textContent = formatSpeed(currentTorrent.downloadSpeed);
           statUpload.textContent   = formatSpeed(currentTorrent.uploadSpeed);
-          statPeers.textContent    = currentTorrent.numPeers + ' / ' + (torrent.numPeers + 10);
+          // numPeers = live WebSocket-connected peers (what the browser can actually reach)
+          statPeers.textContent    = currentTorrent.numPeers + ' ws peers';
+          // Update the live badge in sidebar too
+          if (cardId) {
+            var liveBadge = document.getElementById('seed-badge-' + cardId);
+            if (liveBadge) {
+              liveBadge.textContent = '\uD83D\uDFE0 ' + currentTorrent.numPeers + ' live (WS) / ~' + t.seeds.toLocaleString() + ' full swarm';
+            }
+          }
 
           var pct = Math.round(currentTorrent.progress * 100);
           bufferFill.style.width            = pct + '%';
