@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M6 → M7
 IN PROGRESS: none
-Last done: M7.2 (GET /api/federation/library: aggregated media catalog tagged by host origin)
-Next: M7.3
+Last done: M7.3 (GET /api/health/metrics: battery, thermal, storage, ram, uptime)
+Next: M7.4
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

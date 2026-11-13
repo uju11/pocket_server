@@ -990,6 +990,29 @@ object WebHttpServer {
                         )), ContentType.Application.Json)
                     }
 
+                    // ── System Health & Metrics Dashboard (M7.3) ──────────────
+                    get("/api/health/metrics") {
+                        val m = com.remotemedia.core.SystemMetricsManager.currentMetrics.value
+                        val baseDir = com.remotemedia.storage.StorageManager.getBaseDir()
+                        val freeStorage = baseDir.freeSpace
+                        val totalStorage = baseDir.totalSpace
+                        val resp = mapOf(
+                            "cpu_percent" to m.cpuPercent,
+                            "cpu_temp_c" to m.cpuTempCelsius,
+                            "ram_percent" to m.ramPercent,
+                            "ram_used_bytes" to m.ramUsedBytes,
+                            "ram_total_bytes" to m.ramTotalBytes,
+                            "battery_percent" to m.batteryPercent,
+                            "is_charging" to m.isCharging,
+                            "battery_temp_c" to m.batteryTempCelsius,
+                            "storage_free_bytes" to freeStorage,
+                            "storage_total_bytes" to totalStorage,
+                            "storage_used_bytes" to (totalStorage - freeStorage),
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                        call.respondText(gson.toJson(resp), ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }
