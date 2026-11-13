@@ -1,9 +1,9 @@
 # STATE (update after every task, keep < 40 lines)
 Updated: 2026-11-13
-Phase: M3 → M4
+Phase: M4 → M5
 IN PROGRESS: none
-Last done: M4.3 (POST /api/watch/progress syncs position_ms/duration_ms to WatchStateManager)
-Next: M4.4
+Last done: M4.4 (GET /api/media/stream/{id} with HTTP Range 206/200 & auth/visibility check)
+Next: M5
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)

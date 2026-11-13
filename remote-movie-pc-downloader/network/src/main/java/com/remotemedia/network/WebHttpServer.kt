@@ -25,6 +25,7 @@ import io.ktor.server.request.receiveMultipart
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.header
+import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondText
@@ -750,6 +751,42 @@ object WebHttpServer {
                         }
                         com.remotemedia.core.MediaVisibilityManager.setVisibility(id, isPublic)
                         call.respondText(gson.toJson(mapOf("id" to id, "is_public" to isPublic)), ContentType.Application.Json)
+                    }
+
+                    // ── Direct Media Stream / Download (M4.4) ────────────────
+                    get("/api/media/stream/{id}") {
+                        val rawId = call.parameters["id"] ?: ""
+                        val id = try { java.net.URLDecoder.decode(rawId, "UTF-8") } catch (_: Exception) { rawId }
+                        if (id.isBlank()) {
+                            return@get call.respond(HttpStatusCode.BadRequest)
+                        }
+
+                        // Auth & visibility check (safety rule: default visibility private)
+                        val isPublic = com.remotemedia.core.MediaVisibilityManager.isPublic(id)
+                        if (!isPublic) {
+                            val authHeader = call.request.headers["Authorization"]?.removePrefix("Bearer ")?.trim()
+                            val tokenParam = call.request.queryParameters["token"]
+                            val tokenStr = if (!authHeader.isNullOrBlank()) authHeader else tokenParam
+                            val token = tokenStr?.let { com.remotemedia.core.TokenManager.validate(it) }
+                            if (token == null) {
+                                return@get call.respond(HttpStatusCode.Unauthorized)
+                            }
+                        }
+
+                        val file = com.remotemedia.storage.StorageManager.resolveRelativePath(id)
+                            ?: java.io.File(com.remotemedia.storage.StorageManager.getBaseDir(), id).takeIf { it.exists() }
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+
+                        if (file.isDirectory) {
+                            return@get call.respond(HttpStatusCode.NotFound)
+                        }
+
+                        call.response.header(HttpHeaders.AcceptRanges, "bytes")
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, file.name).toString()
+                        )
+                        call.respondFile(file)
                     }
 
                     get("/api/v2/app/webapiVersion") {
