@@ -519,6 +519,38 @@ object WebHttpServer {
                         }
                     }
 
+                    // ── Drive Share Links (M2.2) ─────────────────────────────
+                    post("/api/drive/share") {
+                        val path = call.request.queryParameters["path"] ?: ""
+                        val ttl = call.request.queryParameters["ttl_ms"]?.toLongOrNull()
+                        val abs = com.remotemedia.storage.StorageManager.resolveRelativePath(path)?.absolutePath
+                            ?: return@post call.respondText("{\"error\":\"not_found\"}", ContentType.Application.Json, HttpStatusCode.NotFound)
+                        val link = com.remotemedia.storage.ShareLinkManager.create(abs, ttl)
+                        call.respondText(gson.toJson(mapOf("token" to link.token, "url" to "/s/${link.token}")),
+                            ContentType.Application.Json)
+                    }
+
+                    get("/s/{token}") {
+                        val token = call.parameters["token"] ?: ""
+                        val link = com.remotemedia.storage.ShareLinkManager.resolve(token)
+                            ?: return@get call.respondText("not_found_or_expired", ContentType.Text.Plain, HttpStatusCode.Gone)
+                        call.response.header(HttpHeaders.ContentDisposition,
+                            ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, link.fileName).toString())
+                        call.respondFile(java.io.File(link.absolutePath))
+                    }
+
+                    get("/api/drive/share") {
+                        call.respondText(gson.toJson(com.remotemedia.storage.ShareLinkManager.listAll()),
+                            ContentType.Application.Json)
+                    }
+
+                    post("/api/drive/share/revoke") {
+                        val token = call.request.queryParameters["token"] ?: ""
+                        val ok = com.remotemedia.storage.ShareLinkManager.revoke(token)
+                        call.respondText(if (ok) "{\"ok\":true}" else "{\"error\":\"not_found\"}",
+                            ContentType.Application.Json)
+                    }
+
                     get("/api/v2/app/webapiVersion") {
                         call.respondText("2.9.3", ContentType.Text.Plain)
                     }

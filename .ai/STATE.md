@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M1 → M2
 IN PROGRESS: none
-Last done: M2.1 (DriveUploadManager: chunked resumable upload, init/chunk/complete/cancel/status endpoints)
-Next: M2.2
+Last done: M2.2 (ShareLinkManager: token→file, TTL, revoke; GET /s/{token} no-auth download; share CRUD routes)
+Next: M2.3
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
