@@ -27,3 +27,6 @@ Desktop.ini
 *.apk
 release-apks/
 
+# Spike test output
+drift_results.txt
+
