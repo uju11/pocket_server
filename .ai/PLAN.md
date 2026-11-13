@@ -43,7 +43,7 @@ Android device = personal cloud + streaming host (one-click on). Clients: stream
 ## M5 Torrent streaming + source plugins (Torznab, Telegram, Internet Archive, TMDB)
 [x] M5.1 | Seeding toggle & stream endpoint in :engine-torrent — TorrentStreamManager.kt: ensure seeding disabled by default; expose stream status API | seeding off by default; returns stream stats
 [x] M5.2 | Torznab source in :sources — TorznabClient.kt: parse Torznab XML/RSS search feed into unified media items | parses item title, magnet link, size, seeders
-[ ] M5.3 | Internet Archive source in :sources — ArchiveOrgSource.kt: query archive.org metadata API for public domain videos | returns direct MP4 stream/download URLs
+[x] M5.3 | Internet Archive source in :sources — ArchiveOrgSource.kt: query archive.org metadata API for public domain videos | returns direct MP4 stream/download URLs
 [ ] M5.4 | TMDB metadata resolver in :sources — TmdbClient.kt: lookup poster, backdrop, overview by title/year | returns metadata without requiring API key if missing
 M6 Watch party (host-authoritative WebSocket) + web PWA with guest links
 M7 Drive app, hub federation, health dashboard

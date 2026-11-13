@@ -2,8 +2,8 @@
 Updated: 2026-11-13
 Phase: M4 → M5
 IN PROGRESS: none
-Last done: M5.2 (TorznabClient.kt in :sources: parse Torznab/RSS XML into unified items with magnet, size, seeders)
-Next: M5.3
+Last done: M5.3 (ArchiveOrgSource.kt in :sources: archive.org search & direct MP4 stream/download URLs)
+Next: M5.4
 Blockers: S3 outcome requires 24h manual device test — fill spikes/background-survival/README.md after test
 Notes (<=10 lines, only what a fresh session must know):
 - Repo root: remote-movie-pc-downloader/ (server app, Kotlin/Android)
