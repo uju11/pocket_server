@@ -30,9 +30,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import com.remotemedia.ServerForegroundService
-import com.remotemedia.download.TorrentEngine
-import com.remotemedia.download.TorrentTrackersManager
-import com.remotemedia.services.JackettServer
+import com.remotemedia.enginetorrent.TorrentEngine
+import com.remotemedia.enginetorrent.TorrentTrackersManager
+import com.remotemedia.sources.JackettServer
 import com.remotemedia.ui.theme.*
 
 @Composable

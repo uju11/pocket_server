@@ -16,24 +16,24 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
-import com.remotemedia.core.FederatedMediaManager
-import com.remotemedia.core.UptimeLogger
-import com.remotemedia.core.HostMediaManager
-import com.remotemedia.core.MeshShareManager
-import com.remotemedia.core.NetworkShareManager
 import com.remotemedia.core.LogLevel
 import com.remotemedia.core.LogTag
 import com.remotemedia.core.Logger
-import com.remotemedia.core.StorageManager
+import com.remotemedia.core.UptimeLogger
 import com.remotemedia.core.GpuComputeManager
-import com.remotemedia.download.TelegramBotEngine
-import com.remotemedia.download.TorrentEngine
-import com.remotemedia.services.DlnaServer
-import com.remotemedia.services.JackettServer
-import com.remotemedia.services.JellyfinDiscoveryResponder
-import com.remotemedia.services.JellyfinServer
-import com.remotemedia.services.TelegramLocalServer
-import com.remotemedia.services.WebHttpServer
+import com.remotemedia.storage.StorageManager
+import com.remotemedia.network.MeshShareManager
+import com.remotemedia.network.NetworkShareManager
+import com.remotemedia.network.WebHttpServer
+import com.remotemedia.media.FederatedMediaManager
+import com.remotemedia.media.HostMediaManager
+import com.remotemedia.enginetorrent.TorrentEngine
+import com.remotemedia.telegram.TelegramBotEngine
+import com.remotemedia.telegram.TelegramLocalServer
+import com.remotemedia.sources.JackettServer
+import com.remotemedia.adapters.DlnaServer
+import com.remotemedia.adapters.JellyfinDiscoveryResponder
+import com.remotemedia.adapters.JellyfinServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -127,15 +127,15 @@ class ServerForegroundService : Service() {
         com.remotemedia.core.UserManager.init(this)   // M1.1
         com.remotemedia.core.TokenManager.init(this)   // M1.2
         com.remotemedia.core.PairingManager.init(this)  // M1.3
-        com.remotemedia.core.WatchStateManager.init(this) // M1.4
-        com.remotemedia.core.PlaybackProgressManager.init(this)
-        com.remotemedia.services.JellyfinManager.init(this)
+        com.remotemedia.storage.WatchStateManager.init(this) // M1.4
+        com.remotemedia.storage.PlaybackProgressManager.init(this)
+        com.remotemedia.adapters.JellyfinManager.init(this)
         HostMediaManager.init(this)
         NetworkShareManager.init(this)
         MeshShareManager.init(this) // M6: Client Mesh sharing
         FederatedMediaManager.init(this) // M5 & M6: init after source managers
         GpuComputeManager.init(this)
-        com.remotemedia.download.YtDlpManager.init(this)
+        com.remotemedia.media.YtDlpManager.init(this)
         acquireLocks()
         _serverStartTimeMs = System.currentTimeMillis()
         _isRunning.value = true

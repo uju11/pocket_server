@@ -8,6 +8,7 @@ composeBom = "2024.11.00"
 ktor = "2.3.12"
 coroutines = "1.9.0"
 libtorrent4j = "2.1.0-30"
+gson = "2.10.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,8 +37,10 @@ ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-conte
 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 libtorrent4j = { group = "org.libtorrent4j", name = "libtorrent4j", version = "2.1.0-30" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

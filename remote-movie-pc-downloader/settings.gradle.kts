@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "remote-movie-pc-downloader"
-include(":app")
+include(":app", ":core", ":network", ":storage", ":media", ":adapters", ":sources", ":engine-torrent", ":telegram")

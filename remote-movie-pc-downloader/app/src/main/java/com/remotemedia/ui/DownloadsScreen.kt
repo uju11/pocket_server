@@ -35,9 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.remotemedia.core.StorageManager
-import com.remotemedia.download.DownloadItem
-import com.remotemedia.download.TorrentEngine
+import com.remotemedia.storage.StorageManager
+import com.remotemedia.enginetorrent.DownloadItem
+import com.remotemedia.enginetorrent.TorrentEngine
 import com.remotemedia.ui.theme.*
 import java.io.File
 

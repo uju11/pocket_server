@@ -1,7 +1,7 @@
 package com.remotemedia.ui
 
 import com.remotemedia.ServerForegroundService
-import com.remotemedia.download.TdlibDownloadEngine
+import com.remotemedia.telegram.TdlibDownloadEngine
 
 import android.content.ClipData
 import android.content.ClipboardManager

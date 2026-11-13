@@ -70,7 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.remotemedia.ServerForegroundService
 import com.remotemedia.core.LogTag
 import com.remotemedia.core.Logger
-import com.remotemedia.core.StorageManager
+import com.remotemedia.storage.StorageManager
 import com.remotemedia.core.SystemMetricsManager
 import com.remotemedia.ui.theme.ElectricTeal
 import com.remotemedia.ui.theme.StatusGreen

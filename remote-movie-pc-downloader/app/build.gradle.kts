@@ -59,6 +59,15 @@ android {
 }
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":network"))
+    implementation(project(":storage"))
+    implementation(project(":media"))
+    implementation(project(":adapters"))
+    implementation(project(":sources"))
+    implementation(project(":engine-torrent"))
+    implementation(project(":telegram"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

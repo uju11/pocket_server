@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.remotemedia.core.DevicePolicy
 import com.remotemedia.core.FilePermissionRule
 import com.remotemedia.core.PermissionsManager
-import com.remotemedia.core.StorageManager
+import com.remotemedia.storage.StorageManager
 import com.remotemedia.ui.theme.*
 import java.io.File
 

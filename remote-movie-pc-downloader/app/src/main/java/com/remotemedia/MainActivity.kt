@@ -4,8 +4,11 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -16,16 +19,16 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import com.remotemedia.core.FederatedMediaManager
-import com.remotemedia.core.HostMediaManager
-import com.remotemedia.core.MeshShareManager
-import com.remotemedia.core.NetworkShareManager
 import com.remotemedia.core.PermissionsManager
-import com.remotemedia.core.StorageManager
 import com.remotemedia.core.SystemMetricsManager
-import com.remotemedia.download.TorrentTrackersManager
-import com.remotemedia.services.JackettServer
-import com.remotemedia.services.JellyfinManager
+import com.remotemedia.storage.StorageManager
+import com.remotemedia.network.MeshShareManager
+import com.remotemedia.network.NetworkShareManager
+import com.remotemedia.media.FederatedMediaManager
+import com.remotemedia.media.HostMediaManager
+import com.remotemedia.enginetorrent.TorrentTrackersManager
+import com.remotemedia.sources.JackettServer
+import com.remotemedia.adapters.JellyfinManager
 import com.remotemedia.ui.*
 import com.remotemedia.ui.theme.RemoteMediaTheme
 import com.remotemedia.ui.theme.TacticalCanvas
@@ -42,20 +45,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         StorageManager.init(this)
-        com.remotemedia.core.PlaybackProgressManager.init(this)
+        com.remotemedia.storage.PlaybackProgressManager.init(this)
         HostMediaManager.init(this)
         NetworkShareManager.init(this)
         MeshShareManager.init(this) // M6: Client Mesh sharing
         FederatedMediaManager.init(this) // M5 & M6: init after all source managers
         JellyfinManager.init(this)
-        com.remotemedia.services.JellyfinClusterManager.init(this)
+        com.remotemedia.adapters.JellyfinClusterManager.init(this)
         PermissionsManager.init(this)
         TorrentTrackersManager.init(this)
         JackettServer.init(this)
-        com.remotemedia.download.YtDlpManager.init(this)
+        com.remotemedia.media.YtDlpManager.init(this)
         SystemMetricsManager.start(this)
         ServerForegroundService.initFromPrefs(this)
         checkNotificationPermission()
+        checkAndRequestAllFilesPermission()
 
         val prefs = getSharedPreferences("remote_media_prefs", Context.MODE_PRIVATE)
 
@@ -336,6 +340,24 @@ class MainActivity : ComponentActivity() {
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun checkAndRequestAllFilesPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    try {
+                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        startActivity(intent)
+                    } catch (_: Exception) {}
+                }
             }
         }
     }

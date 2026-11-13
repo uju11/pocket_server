@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import com.remotemedia.ServerForegroundService
 import com.remotemedia.core.GpuComputeManager
-import com.remotemedia.services.JellyfinClusterManager
-import com.remotemedia.services.RemoteJellyfinServer
+import com.remotemedia.adapters.JellyfinClusterManager
+import com.remotemedia.adapters.RemoteJellyfinServer
 import com.remotemedia.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -441,7 +441,7 @@ fun JellyfinTabScreen() {
             var newServerPass by remember { mutableStateOf("") }
             var newServerUserId by remember { mutableStateOf("") }
             var newServerApiKey by remember { mutableStateOf("") }
-            var discoveredUsers by remember { mutableStateOf<List<com.remotemedia.services.JellyfinPublicUser>>(emptyList()) }
+            var discoveredUsers by remember { mutableStateOf<List<com.remotemedia.adapters.JellyfinPublicUser>>(emptyList()) }
             var isLoadingUsers by remember { mutableStateOf(false) }
 
             AlertDialog(

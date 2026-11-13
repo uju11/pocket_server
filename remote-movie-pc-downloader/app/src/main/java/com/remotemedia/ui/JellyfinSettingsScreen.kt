@@ -43,8 +43,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.remotemedia.core.StorageManager
-import com.remotemedia.services.JellyfinManager
+import com.remotemedia.storage.StorageManager
+import com.remotemedia.adapters.JellyfinManager
 import com.remotemedia.ui.theme.AccentGreen
 import com.remotemedia.ui.theme.AccentRed
 import com.remotemedia.ui.theme.BorderGrey

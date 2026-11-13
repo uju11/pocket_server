@@ -44,8 +44,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.remotemedia.core.StorageManager
-import com.remotemedia.services.JellyfinManager
+import com.remotemedia.storage.StorageManager
+import com.remotemedia.adapters.JellyfinManager
 import com.remotemedia.ui.theme.StatusGreen
 import com.remotemedia.ui.theme.TacticalBg
 import com.remotemedia.ui.theme.TacticalBorder
